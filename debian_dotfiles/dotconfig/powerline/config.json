@@ -1,0 +1,54 @@
+{
+	"common": {
+		"term_truecolor": false,
+		"default_top_theme": "powerline_bfc"
+	},
+	"ext": {
+		"ipython": {
+			"colorscheme": "bfc_dflt_colorscheme",
+			"theme": "in",
+			"local_themes": {
+				"rewrite": "rewrite",
+				"out": "out",
+				"in2": "in2"
+			}
+		},
+		"pdb": {
+			"colorscheme": "bfc_dflt_colorscheme",
+			"theme": "default"
+		},
+		"shell": {
+			"colorscheme": "bfc_shell_colorscheme",
+			"theme": "bfc",
+			"local_themes": {
+				"continuation": "continuation",
+				"select": "select"
+			}
+		},
+		"tmux": {
+			"colorscheme": "bfc_dflt_colorscheme",
+			"theme": "default"
+		},
+		"vim": {
+			"colorscheme": "bfc_dflt_colorscheme",
+			"theme": "default",
+			"local_themes": {
+				"__tabline__": "tabline",
+
+				"cmdwin": "cmdwin",
+				"help": "help",
+				"quickfix": "quickfix",
+
+				"powerline.matchers.vim.plugin.nerdtree.nerdtree": "plugin_nerdtree",
+				"powerline.matchers.vim.plugin.commandt.commandt": "plugin_commandt",
+				"powerline.matchers.vim.plugin.gundo.gundo": "plugin_gundo",
+				"powerline.matchers.vim.plugin.gundo.gundo_preview": "plugin_gundo-preview"
+			}
+		},
+		"wm": {
+			"colorscheme": "bfc_dflt_colorscheme",
+			"theme": "default",
+			"update_interval": 2
+		}
+	}
+}

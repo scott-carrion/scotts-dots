@@ -1,0 +1,15 @@
+qman is an improved "man" that allows for easier navigation through manual pages
+spacemacs will not work in nix
+tmux dotfiles (plus tpm? for saving tmux states)
+bashrc
+vimrc
+Stuff for i3/linux desktop? polybar, rofi + configs
+powerline + configs
+Font: Iosevka Term
+btop/bpytop
+wireshark
+ranger
+
+Windows:
+flameshot 12.x (13.x is broken on win11)
+WSL (debian)
