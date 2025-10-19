@@ -2,11 +2,11 @@
 set -e
 
 echo Now installing package manager configs
-sudo cp etc/apt/* /etc/apt
+sudo cp debian_dotfiles/etc/apt/* /etc/apt
 
 echo Now installing system packages
 sudo apt-get -y update
-sudo apt-get -y install vim emacs tmux powerline btop wireshark ranger polybar make meson ninja cmake i3 powerline-gitstatus pipx gcc g++ python3-pip python3-cogapp
+sudo apt-get -y install vim emacs tmux powerline btop wireshark ranger polybar make meson ninja-build cmake i3 powerline-gitstatus pipx gcc g++ python3-pip python3-cogapp
 
 echo Now installing dotfiles
 cp debian_dotfiles/dotspacemacs ~/.spacemacs
@@ -16,7 +16,7 @@ cp debian_dotfiles/dottmux.conf ~/.tmux.conf
 cp -r debian_dotfiles/dotconfig ~/.config
 
 echo Now installing fonts
-cp -r fonts /usr/local/share/fonts
+cp -r fonts /usr/local/share
 
 echo Now installing extra programs
 # TODO: qman, tpm, spacemacs
