@@ -26,7 +26,7 @@ git clone https://github.com/plp13/qman.git tmp/qman
 cd tmp/qman && meson setup build && cd build && meson compile && sudo meson install
 
 cd ../..
-git clone https://github.com/jonaburg/picom.git tmp/picom
+git clone https://github.com/jonaburg/picom.git picom
 cd picom
 meson --buildtype=release -Dregex=false . build
 ninja -C build
