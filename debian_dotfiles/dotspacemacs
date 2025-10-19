@@ -47,6 +47,7 @@ This function should only modify configuration layer settings."
      shell
      org
      cmake
+     robot-framework
      treemacs)
 
 
