@@ -217,7 +217,7 @@ for_window [class="feh"] floating enable
 exec ~/.fehbg --no-startup-id
 
 # Start picom (forked version with animation support)
-exec_always --no-startup-id picom -b --config ~/.config/picom/picom.conf --experimental-backends
+#exec_always --no-startup-id picom -b --config ~/.config/picom/picom.conf --experimental-backends
 
 # Execute polybar
 exec_always --no-startup-id ~/.config/polybar/hack/launch.sh
