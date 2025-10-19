@@ -6,7 +6,7 @@ sudo cp debian_dotfiles/etc/apt/* /etc/apt
 
 echo Now installing system packages
 sudo apt-get -y update
-sudo apt-get -y install vim emacs tmux powerline btop wireshark ranger polybar make meson ninja-build cmake i3 powerline-gitstatus pipx gcc g++ python3-pip python3-cogapp libcunit1-dev libncurses-dev pkg-config libbz2-dev liblzma-dev libcunit1 kitty
+sudo apt-get -y install vim emacs tmux powerline btop wireshark ranger polybar make meson ninja-build cmake i3 powerline-gitstatus pipx gcc g++ python3-pip python3-cogapp libcunit1-dev libncurses-dev pkg-config libbz2-dev liblzma-dev libcunit1 kitty rofi
 
 echo Now installing dotfiles
 cp debian_dotfiles/dotspacemacs ~/.spacemacs
