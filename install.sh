@@ -12,6 +12,7 @@ echo Now installing dotfiles
 cp debian_dotfiles/dotspacemacs ~/.spacemacs
 cp debian_dotfiles/dotbashrc ~/.bashrc
 cp debian_dotfiles/dotvimrc ~/.vimrc
+cp debian_dotfiles/dotxbindkeysrc ~/.xbindkeysrc
 cp debian_dotfiles/dottmux.conf ~/.tmux.conf
 cp -r debian_dotfiles/dotconfig/* ~/.config
 
