@@ -164,6 +164,8 @@ export PATH=$PATH:/usr/sbin:/home/$USER/.platformio/penv/bin:/home/$USER/bin:/ho
 # Export other bash vars
 #export DOCKER_HOST=unix:///run/user/1000/docker.sock
 
+export LANG=C.UTF-8
+
 # Finally, execute tmux
 #if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
 #  exec tmux -2 new-session -A -s main
