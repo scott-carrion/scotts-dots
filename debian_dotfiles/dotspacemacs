@@ -45,7 +45,7 @@ This function should only modify configuration layer settings."
      multiple-cursors
      themes-megapack
      shell
-     org
+     ;; org
      cmake
      robot-framework
      treemacs)
