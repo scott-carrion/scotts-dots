@@ -17,6 +17,11 @@ cp debian_container_dotfiles/dotxbindkeysrc ~/.xbindkeysrc
 cp debian_container_dotfiles/dottmux.conf ~/.tmux.conf
 cp -r debian_container_dotfiles/dotconfig/* ~/.config
 
+echo Now symlinking SSH and git configs from /hosthome
+rm -rf ~/.ssh ~/.gitconfig
+ln -s /hosthome/.ssh ~/.ssh
+ln -s /hosthome/.gitconfig ~/.gitconfig
+
 echo Now installing fonts
 sudo cp -r fonts /usr/local/share
 
