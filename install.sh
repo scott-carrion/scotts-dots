@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-#echo Now installing package manager configs
-#sudo cp debian_dotfiles/etc/apt/* /etc/apt
+echo Now installing package manager configs
+sudo cp debian_dotfiles/etc/apt/* /etc/apt
 
 echo Now installing system packages
 sudo apt-get -y update

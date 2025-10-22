@@ -1,0 +1,15 @@
+# bfc apt pin preferences
+# Keep default priority for stable branch and stable branch security updates
+
+# Policy for testing branch packages
+# Priority set higher than unstable (250) and installed packages (100),
+# but lower than stable branch
+Package: *
+Pin: release a=testing
+Pin-Priority: 300
+
+# Priority set higher than installed packages (100), but lower than testing and
+# stable branches
+Package: *
+Pin: release a=unstable
+Pin-Priority: 250

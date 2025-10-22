@@ -43,9 +43,9 @@ This function should only modify configuration layer settings."
      ;; lsp
      markdown
      multiple-cursors
-     ;; themes-megapack
+     themes-megapack
      shell
-     ;; org
+     org
      cmake
      robot-framework
      yaml
@@ -205,40 +205,40 @@ It should only modify the values of Spacemacs settings."
    ;; package can be defined with `:package', or a theme can be defined with
    ;; `:location' to download the theme package, refer the themes section in
    ;; DOCUMENTATION.org for the full theme specifications.
-   dotspacemacs-themes '(spacemacs-dark
-                         spacemacs-light)
+   ;;dotspacemacs-themes '(spacemacs-dark
+   ;;                      spacemacs-light)
 
    ;; Uncomment if using themes-megapack
-   ;;dotspacemacs-themes '(planet
-   ;;                      spacemacs-dark
-   ;;                      spacemacs-light
-   ;;                      zenburn
-   ;;                      tangotango
-   ;;                      tango-2
-   ;;                      granger
-   ;;                      odersky
-   ;;                      ritchie
-   ;;                      spolsky
-   ;;                      wilson
-   ;;                      subatomic256
-   ;;                      solarized-dark-high-contrast
-   ;;                      solarized-gruvbox-dark
-   ;;                      soft-stone
-   ;;                      soft-charcoal
-   ;;                      seti
-   ;;                      reverse
-   ;;                      railscasts
-   ;;                      occidental
-   ;;                      obsidian
-   ;;                      noctilux
-   ;;                      monokai
-   ;;                      molokai
-   ;;                      moe-dark
-   ;;                      moe-light
-   ;;                      modus-operandi-tinted
-   ;;                      modus-vivendi
-   ;;                      modus-vivendi-tinted
-   ;;                      modus-vivendi-tritanopia)
+   dotspacemacs-themes '(planet
+                         spacemacs-dark
+                         spacemacs-light
+                         zenburn
+                         tangotango
+                         tango-2
+                         granger
+                         odersky
+                         ritchie
+                         spolsky
+                         wilson
+                         subatomic256
+                         solarized-dark-high-contrast
+                         solarized-gruvbox-dark
+                         soft-stone
+                         soft-charcoal
+                         seti
+                         reverse
+                         railscasts
+                         occidental
+                         obsidian
+                         noctilux
+                         monokai
+                         molokai
+                         moe-dark
+                         moe-light
+                         modus-operandi-tinted
+                         modus-vivendi
+                         modus-vivendi-tinted
+                         modus-vivendi-tritanopia)
 
    ;; Set the theme for the Spaceline. Supported themes are `spacemacs',
    ;; `all-the-icons', `custom', `doom', `vim-powerline' and `vanilla'. The

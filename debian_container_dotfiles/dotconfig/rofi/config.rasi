@@ -1,0 +1,6 @@
+// Set the theme, and officially allow drun mode
+// We do this to allow rofi to serve as a dmenu replacement (see i3 config)
+@theme "/usr/share/rofi/themes/blue_cosmos.rasi"
+configuration {
+  modi: "window,run,ssh,drun";
+}
