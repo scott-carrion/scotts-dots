@@ -23,8 +23,8 @@ ln -s /hosthome/.ssh ~/.ssh
 ln -s /hosthome/.gitconfig ~/.gitconfig
 
 echo Now installing githooks
-cp -r githooks ~/githooks
-git config --global core.hooksPath ~/githooks
+sudo cp -r githooks /usr/local/share/githooks
+git config --global core.hooksPath /usr/local/share/githooks
 
 echo Now installing fonts
 sudo cp -r fonts /usr/local/share
