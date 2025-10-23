@@ -17,6 +17,10 @@ cp debian_container_dotfiles/dotxbindkeysrc ~/.xbindkeysrc
 cp debian_container_dotfiles/dottmux.conf ~/.tmux.conf
 cp -r debian_container_dotfiles/dotconfig/* ~/.config
 
+echo Now installing githooks
+cp -r githooks ~/githooks
+git config --global core.hooksPath ~/githooks
+
 echo Now symlinking SSH and git configs from /hosthome
 rm -rf ~/.ssh ~/.gitconfig
 ln -s /hosthome/.ssh ~/.ssh
