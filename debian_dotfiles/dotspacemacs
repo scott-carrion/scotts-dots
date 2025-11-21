@@ -597,6 +597,44 @@ before packages are loaded."
   ;; Add mnemonic for configure projectile project
   (spacemacs/set-leader-keys "pC" 'projectile-configure-project)
 
+  ;; Add useful user binding mnemonics
+
+  ;; SPC o t: Terminal that plays nicely with tmux and readline
+  ;; Shorthand for: SPC a t s T
+  (spacemacs/set-leader-keys "ot" 'spacemacs/shell-pop-term)
+  (spacemacs/declare-prefix "ot" "pop-terminal")
+
+  ;; SPC o h .: Highlight symbol at point
+  ;; Shorthand for: M-s h .
+  ;;
+  ;; SPC o h /: Highlight symbol at point and search for it
+  ;;
+  ;; SPC o h r: Highlight regexp, interactive color choice
+  ;; Shorthand for: M-s h . and then SPC s h
+  ;;
+  ;; SPC o h u: Unhighlight a search term, interactive choice
+  ;; Shorthand for: M-s h u
+  ;;
+  ;; SPC o h C: Clear all highlights (by toggling hi-lock-mode twice)
+  (spacemacs/declare-prefix "oh" "highlighting")
+  (spacemacs/set-leader-keys
+    "oh." 'highlight-symbol-at-point
+    "oh/" (lambda ()
+            (interactive)
+            (highlight-symbol-at-point)
+            (spacemacs/symbol-highlight))
+    "ohr" 'highlight-regexp
+    "ohu" 'unhighlight-regexp
+    "ohC" (lambda ()
+            (interactive)
+            (hi-lock-mode 0)
+            (hi-lock-mode 1)))
+  (spacemacs/declare-prefix "oh." "symbol-at-point")
+  (spacemacs/declare-prefix "oh/" "symbol-and-search-at-point")
+  (spacemacs/declare-prefix "ohr" "regexp")
+  (spacemacs/declare-prefix "ohu" "clear-regexp")
+  (spacemacs/declare-prefix "ohC" "clear-all")
+
   ;; Disable package GPG key checking
   (setq package-check-signature nil)
 
@@ -606,6 +644,9 @@ before packages are loaded."
   ;; Enable local values set in .dir-locals.el
   ;; Used to save compilation command and other project(ile)-specific stuff
   (setq enable-dir-local-variables t)
+
+  ;; Skip past info and errors in compilation
+  (setq-default compilation-skip-threshold 2)
 
   ;; Disable C-h == help instead of delete in insert mode
   (global-set-key (kbd "C-h") 'backward-delete-char)
