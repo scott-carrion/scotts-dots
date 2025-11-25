@@ -52,6 +52,7 @@ This function should only modify configuration layer settings."
      yaml
      (ranger :variables ranger-override-dired 'ranger
              ranger-show-preview t)
+     copy-as-format
      treemacs)
 
 
