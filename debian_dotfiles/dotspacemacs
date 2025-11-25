@@ -37,7 +37,8 @@ This function should only modify configuration layer settings."
      javascript
      tern
      emacs-lisp
-     git
+     (git :variables git-enable-magit-delta-plugin t
+          git-enable-magit-todos-plugin t)
      helm
      xclipboard
      ;; lsp
@@ -49,6 +50,8 @@ This function should only modify configuration layer settings."
      cmake
      robot-framework
      yaml
+     (ranger :variables ranger-override-dired 'ranger
+             ranger-show-preview t)
      treemacs)
 
 
@@ -604,6 +607,14 @@ before packages are loaded."
   (spacemacs/set-leader-keys "ot" 'spacemacs/shell-pop-term)
   (spacemacs/declare-prefix "ot" "pop-terminal")
 
+  ;; SPC o d r: Open ranger
+  (spacemacs/declare-prefix "od" "open directory")
+  (spacemacs/set-leader-keys
+    "odr" 'ranger
+    "odd" 'deer)
+  (spacemacs/declare-prefix "odr" "ranger")
+  (spacemacs/declare-prefix "odd" "deer")
+
   ;; SPC o h .: Highlight symbol at point
   ;; Shorthand for: M-s h .
   ;;
@@ -650,6 +661,8 @@ before packages are loaded."
 
   ;; Disable C-h == help instead of delete in insert mode
   (global-set-key (kbd "C-h") 'backward-delete-char)
+
+  ;; magit-todos-keywords-list had to be edited with customize-group
   )
 
 
