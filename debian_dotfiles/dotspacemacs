@@ -754,7 +754,7 @@ before packages are loaded."
   ;; Add configuration for Gemini
   (setq gptel-model 'gemini-pro-latest
         gptel-backend (gptel-make-gemini "Gemini Pro"
-                        :key "AIzaSyA3J5M0iIIeXDZaYqo46LYzCrOFq6zYYeQ"
+                        :key "YOURKEYHERE"
                         :stream t))
 
   ;; Set centaur tab cycle scope to visible tabs only
