@@ -32,24 +32,32 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(csv
+   '(yaml
+     systemd
+     csv
      python
      javascript
      tern
      emacs-lisp
-     git
+     (git :variables git-enable-magit-delta-plugin t
+          git-enable-magit-todos-plugin t)
      helm
      xclipboard
      ;; lsp
      markdown
      multiple-cursors
-     ;; themes-megapack
+     themes-megapack
      shell
-     ;; org
+     org
      cmake
-     robot-framework
-     yaml
-     treemacs)
+     (ranger :variables ranger-override-dired 'ranger
+             ranger-show-preview t)
+     copy-as-format
+     treemacs
+     llm-client
+     (ibuffer :variables ibuffer-group-buffers-by 'projects)
+     (tabs :variables tabs-selected-tab-bar 'over
+           tabs-icons nil))
 
 
    ;; List of additional packages that will be installed without being wrapped
@@ -60,10 +68,11 @@ This function should only modify configuration layer settings."
    ;; `dotspacemacs/user-config'. To use a local version of a package, use the
    ;; `:location' property: '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
-   dotspacemacs-additional-packages '()
+   dotspacemacs-additional-packages '(yasnippet-snippets)
 
    ;; A list of packages that cannot be updated.
-   dotspacemacs-frozen-packages '()
+   ;; ranger is frozen to avoid blowing away local "require hydra" workaround
+   dotspacemacs-frozen-packages '(ranger)
 
    ;; A list of packages that will not be installed and loaded.
    dotspacemacs-excluded-packages '()
@@ -205,40 +214,37 @@ It should only modify the values of Spacemacs settings."
    ;; package can be defined with `:package', or a theme can be defined with
    ;; `:location' to download the theme package, refer the themes section in
    ;; DOCUMENTATION.org for the full theme specifications.
-   dotspacemacs-themes '(spacemacs-dark
-                         spacemacs-light)
-
-   ;; Uncomment if using themes-megapack
-   ;;dotspacemacs-themes '(planet
-   ;;                      spacemacs-dark
-   ;;                      spacemacs-light
-   ;;                      zenburn
-   ;;                      tangotango
-   ;;                      tango-2
-   ;;                      granger
-   ;;                      odersky
-   ;;                      ritchie
-   ;;                      spolsky
-   ;;                      wilson
-   ;;                      subatomic256
-   ;;                      solarized-dark-high-contrast
-   ;;                      solarized-gruvbox-dark
-   ;;                      soft-stone
-   ;;                      soft-charcoal
-   ;;                      seti
-   ;;                      reverse
-   ;;                      railscasts
-   ;;                      occidental
-   ;;                      obsidian
-   ;;                      noctilux
-   ;;                      monokai
-   ;;                      molokai
-   ;;                      moe-dark
-   ;;                      moe-light
-   ;;                      modus-operandi-tinted
-   ;;                      modus-vivendi
-   ;;                      modus-vivendi-tinted
-   ;;                      modus-vivendi-tritanopia)
+   dotspacemacs-themes '(gotham
+                         planet
+                         spacemacs-dark
+                         spacemacs-light
+                         zenburn
+                         tangotango
+                         tango-2
+                         granger
+                         odersky
+                         ritchie
+                         spolsky
+                         wilson
+                         subatomic256
+                         solarized-dark-high-contrast
+                         solarized-gruvbox-dark
+                         soft-stone
+                         soft-charcoal
+                         seti
+                         reverse
+                         railscasts
+                         occidental
+                         obsidian
+                         noctilux
+                         monokai
+                         molokai
+                         moe-dark
+                         moe-light
+                         modus-operandi-tinted
+                         modus-vivendi
+                         modus-vivendi-tinted
+                         modus-vivendi-tritanopia)
 
    ;; Set the theme for the Spaceline. Supported themes are `spacemacs',
    ;; `all-the-icons', `custom', `doom', `vim-powerline' and `vanilla'. The
@@ -248,6 +254,7 @@ It should only modify the values of Spacemacs settings."
    ;; spaceline theme. Value can be a symbol or list with additional properties.
    ;; (default '(spacemacs :separator wave :separator-scale 1.5))
    dotspacemacs-mode-line-theme '(spacemacs :separator wave :separator-scale 1.5)
+   ;;dotspacemacs-mode-line-theme '(custom :separator wave :separator-scale 1.5)
 
    ;; If non-nil the cursor color matches the state color in GUI Emacs.
    ;; (default t)
@@ -586,6 +593,13 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
+  (defun spaceline-custom-theme (&rest additional-segments)
+    "My custom spaceline theme."
+    (spaceline-compile
+      `(major-mode (minor-modes :when active) buffer-id)
+      `((line-column :separator " | " :priority 3)
+        ,@additional-segments))
+    (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
   )
 
 (defun dotspacemacs/user-config ()
@@ -594,8 +608,125 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
+
   ;; Add mnemonic for configure projectile project
   (spacemacs/set-leader-keys "pC" 'projectile-configure-project)
+
+  ;; Add useful user binding mnemonics
+  ;; SPC o s: Open applicable yasnippet files
+  ;; Shorthand for: C-c & C-v
+  (spacemacs/set-leader-keys "os" 'yas-visit-snippet-file)
+  (spacemacs/declare-prefix "os" "Visit snippet file")
+
+  ;; SPC o T: Terminal that plays nicely with tmux and readline
+  ;; Shorthand for: SPC a t s T
+  (spacemacs/set-leader-keys "oT" 'spacemacs/shell-pop-term)
+  (spacemacs/declare-prefix "oT" "pop-terminal")
+
+  ;; SPC o x: Activate hexl-mode
+  (spacemacs/set-leader-keys "ox" 'hexl-mode)
+  (spacemacs/declare-prefix "ox" "hex mode")
+
+  ;; SPC o d r: Open ranger
+  (spacemacs/declare-prefix "od" "open directory")
+  (spacemacs/set-leader-keys
+    "odr" 'ranger
+    "odd" 'deer)
+  (spacemacs/declare-prefix "odr" "ranger")
+  (spacemacs/declare-prefix "odd" "deer")
+
+  ;; SPC o h .: Highlight symbol at point
+  ;; Shorthand for: M-s h .
+  ;;
+  ;; SPC o h /: Highlight symbol at point and search for it
+  ;;
+  ;; SPC o h r: Highlight regexp, interactive color choice
+  ;; Shorthand for: M-s h . and then SPC s h
+  ;;
+  ;; SPC o h u: Unhighlight a search term, interactive choice
+  ;; Shorthand for: M-s h u
+  ;;
+  ;; SPC o h C: Clear all highlights (by toggling hi-lock-mode twice)
+  (spacemacs/declare-prefix "oh" "highlighting")
+  (spacemacs/set-leader-keys
+    "oh." 'highlight-symbol-at-point
+    "oh/" (lambda ()
+            (interactive)
+            (highlight-symbol-at-point)
+            (spacemacs/symbol-highlight))
+    "ohr" 'highlight-regexp
+    "ohu" 'unhighlight-regexp
+    "ohC" (lambda ()
+            (interactive)
+            (hi-lock-mode 0)
+            (hi-lock-mode 1)))
+  (spacemacs/declare-prefix "oh." "symbol-at-point")
+  (spacemacs/declare-prefix "oh/" "symbol-and-search-at-point")
+  (spacemacs/declare-prefix "ohr" "regexp")
+  (spacemacs/declare-prefix "ohu" "clear-regexp")
+  (spacemacs/declare-prefix "ohC" "clear-all")
+
+  ;; buffer-local var that associates a buffer with a tab group
+  (defvar-local my-centaur-tabs-custom-group nil
+    "The custom tab group name assigned to this buffer.")
+
+  (with-eval-after-load 'centaur-tabs
+    (defun centaur-tabs-buffer-groups ()
+      "SCC custom buffer/tab group rules for manual assignment. Return the custom group if set, otherwise return 'Ungrouped'."
+      (list (or my-centaur-tabs-custom-group "Ungrouped")))
+
+    ;; This will regroup the tab bar
+    (centaur-tabs-group-buffer-groups)
+
+    ;; Helper function that sets the tab group
+    (defun my-centaur-tabs-assign-group (group-name)
+      "Manually assign the current buffer to a specific centaur-tabs group."
+      (interactive "sEnter group name: ")
+      (setq my-centaur-tabs-custom-group (if (string-blank-p group-name) nil group-name))
+      (centaur-tabs-group-buffer-groups)
+      (centaur-tabs-display-update)
+      (message "Buffer assigned to group: %s" (or my-centaur-tabs-custom-group "Ungrouped"))))
+
+  ;; SPC o t l: Next tab
+  ;; SPC o t h: Previous tab
+  ;; SPC o t n: Next tab group
+  ;; SPC o t p: Previous tab group
+  ;; SPC o t j: Ace jump to tab
+  ;; SPC o t L: Move tab to the right
+  ;; SPC o t H: Move tab to the left
+  ;; SPC o t g: Switch to tab group
+  (spacemacs/declare-prefix "ot" "tabs")
+  (spacemacs/set-leader-keys
+    "otl" 'centaur-tabs-forward
+    "oth" 'centaur-tabs-backward
+    "otn" 'centaur-tabs-forward-group
+    "otp" 'centaur-tabs-backward-group
+    "otj" 'centaur-tabs-ace-jump
+    "otL" 'centaur-tabs-move-current-tab-to-right
+    "otH" 'centaur-tabs-move-current-tab-to-left
+    "otg" 'centaur-tabs-switch-group
+    "ots" (lambda()
+            (interactive)
+            (centaur-tabs-ace-jump 4))
+    "otd" (lambda()
+            (interactive)
+            (centaur-tabs-ace-jump 16))
+    "otG" 'my-centaur-tabs-assign-group)
+
+  (spacemacs/declare-prefix "otl" "next tab")
+  (spacemacs/declare-prefix "oth" "previous tab")
+  (spacemacs/declare-prefix "otn" "next group")
+  (spacemacs/declare-prefix "otp" "previous group")
+  (spacemacs/declare-prefix "otj" "select and jump to tab")
+  (spacemacs/declare-prefix "otL" "move tab right")
+  (spacemacs/declare-prefix "otH" "move tab left")
+  (spacemacs/declare-prefix "otg" "switch to tab group")
+  (spacemacs/declare-prefix "ots" "select tab and swap")
+  (spacemacs/declare-prefix "otd" "select tab and delete")
+  (spacemacs/declare-prefix "otG" "assign tab to group")
+
+  ;; TODO: I'd like to be able to see the current tab group name somewhere
+  ;;(centaur-tabs-get-group-name (current-buffer)
 
   ;; Disable package GPG key checking
   (setq package-check-signature nil)
@@ -607,10 +738,129 @@ before packages are loaded."
   ;; Used to save compilation command and other project(ile)-specific stuff
   (setq enable-dir-local-variables t)
 
+  ;; Skip past info and errors in compilation
+  (setq-default compilation-skip-threshold 2)
+
   ;; Disable C-h == help instead of delete in insert mode
   (global-set-key (kbd "C-h") 'backward-delete-char)
+
+  ;; magit-todos-keywords-list had to be edited with customize-group
+
+  ;; Enable yasnippet global mode
+  (yas-global-mode)
+  (add-hook 'yas-minor-mode-hook (lambda ()
+                                   (yas-activate-extra-mode 'fundamental-mode)))
+
+  ;; Add configuration for Gemini
+  (setq gptel-model 'gemini-pro-latest
+        gptel-backend (gptel-make-gemini "Gemini Pro"
+                        :key "AIzaSyA3J5M0iIIeXDZaYqo46LYzCrOFq6zYYeQ"
+                        :stream t))
+
+  ;; Set centaur tab cycle scope to visible tabs only
+  (setq centaur-tabs-cycle-scope 'tabs)
   )
 
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
+(defun dotspacemacs/emacs-custom-settings ()
+  "Emacs custom settings.
+This is an auto-generated function, do not modify its content directly, use
+Emacs customize menu instead.
+This function is called at the very end of Spacemacs initialization."
+  (custom-set-variables
+   ;; custom-set-variables was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(compilation-skip-threshold 2)
+   '(magit-todos-keywords '("TODO" "FIXME" "XXX" "TEMP"))
+   '(package-selected-packages
+     '(ace-link afternoon-theme aggressive-indent alect-themes all-the-icons
+                ample-theme ample-zen-theme anaconda-mode anti-zenburn-theme
+                apropospriate-theme auto-compile auto-highlight-symbol
+                avy-jump-helm-line badwolf-theme birds-of-paradise-plus-theme
+                bubbleberry-theme busybee-theme centaur-tabs centered-cursor-mode
+                cherry-blossom-theme chocolate-theme clean-aindent-mode
+                clues-theme cmake-mode code-cells code-review
+                color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow
+                column-enforce-mode company copy-as-format cpp-auto-include
+                csv-mode cyberpunk-theme cython-mode dakrone-theme darkmine-theme
+                darkokai-theme darktooth-theme define-word devdocs diminish
+                dired-quick-sort disable-mouse disaster django-theme doom-themes
+                dotenv-mode dracula-theme drag-stuff dumb-jump eat edit-indirect
+                ef-themes elisp-def elisp-demos elisp-slime-nav ellama emr
+                esh-help eshell-prompt-extras eshell-z espresso-theme eval-sexp-fu
+                evil-anzu evil-args evil-cleverparens evil-collection
+                evil-easymotion evil-escape evil-evilified-state evil-exchange
+                evil-goggles evil-iedit-state evil-indent-plus evil-lion
+                evil-lisp-state evil-matchit evil-mc evil-nerd-commenter
+                evil-numbers evil-org evil-surround evil-textobj-line evil-tutor
+                evil-unimpaired evil-visual-mark-mode evil-visualstar
+                exotica-theme expand-region eyebrowse eziam-themes fancy-battery
+                farmhouse-themes flatland-theme flatui-theme flycheck
+                gandalf-theme gendoxy gh-md git-link git-messenger git-modes
+                git-timemachine gitignore-templates gnuplot golden-ratio
+                google-c-style google-translate gotham-theme gptel
+                grandshell-theme gruber-darker-theme gruvbox-theme
+                hc-zenburn-theme helm-ag helm-comint helm-ctest helm-descbinds
+                helm-ls-git helm-make helm-mode-manager helm-org helm-org-rifle
+                helm-projectile helm-purpose helm-pydoc helm-swoop helm-xref
+                hemisu-theme heroku-theme hide-comnt highlight-indentation
+                highlight-numbers highlight-parentheses hl-todo holy-mode htmlize
+                hungry-delete hybrid-mode ibuffer-projectile indent-guide info+
+                inkpot-theme inspector ir-black-theme jazz-theme jbeans-theme
+                journalctl-mode js-doc js2-refactor json-mode json-navigator
+                json-reformat kaolin-themes light-soap-theme link-hint
+                live-py-mode livid-mode llm lorem-ipsum lush-theme macrostep
+                madhat2r-theme magit-delta magit-todos markdown-toc material-theme
+                memoize minimal-theme modus-themes moe-theme molokai-theme
+                monochrome-theme monokai-theme multi-line multi-term multi-vterm
+                mustang-theme nameless naquadah-theme nerd-icons nhexl-mode
+                noctilux-theme nodejs-repl npm-mode obsidian-theme
+                occidental-theme oldlace-theme omtose-phellack-themes
+                open-junk-file org-cliplink org-contrib org-download org-mime
+                org-pomodoro org-present org-projectile org-rich-yank
+                org-superstar organic-green-theme orgit-forge overseer
+                page-break-lines paradox password-generator pcre2el
+                phoenix-dark-mono-theme phoenix-dark-pink-theme pip-requirements
+                pipenv pippel planet-theme plz plz-event-source plz-media-type
+                poetry popwin prettier-js professional-theme purple-haze-theme
+                py-isort pydoc pyenv-mode pylookup python-pytest quickrun
+                railscasts-theme rainbow-delimiters ranger rebecca-theme
+                restart-emacs reverse-theme seti-theme shell-pop smeargle
+                smyx-theme soft-charcoal-theme soft-morning-theme soft-stone-theme
+                solarized-theme soothe-theme space-doc spacegray-theme spaceline
+                spaceline-all-the-icons spacemacs-purpose-popwin
+                spacemacs-whitespace-cleanup sphinx-doc string-edit-at-point
+                string-inflection subatomic-theme subatomic256-theme
+                sublime-themes sunny-day-theme symbol-overlay symon systemd
+                tango-2-theme tango-plus-theme tangotango-theme tao-theme
+                term-cursor terminal-here tern toc-org toxi-theme treemacs-evil
+                treemacs-icons-dired treemacs-magit treemacs-persp
+                treemacs-projectile twilight-anti-bright-theme
+                twilight-bright-theme twilight-theme ujelly-theme underwater-theme
+                undo-fu undo-fu-session vi-tilde-fringe vim-powerline
+                volatile-highlights vundo web-beautify wgrep white-sand-theme
+                winum writeroom-mode ws-butler xterm-color yaml-mode yapfify
+                yasnippet-snippets zen-and-art-theme zenburn-theme zonokai-emacs))
+   '(safe-local-variable-values
+     '((cmake-tab-width . 2) (compilation-skip-threshold . 0)
+       (compilation-skip-threshold . 2) (compilation-skip-threshold . "2")
+       (projectile-project-compilation-cmd
+        . "west build --pristine -b qemu_cortex_m3")
+       (projectile-project-install-cmd . "glub")
+       (projectile-project-configure-cmd . "meow")
+       (projectile-project-compilation-cmd . "bark")
+       (projectile-install-project-cmd . "glub")
+       (projectile-compile-project-cmd . "bark")
+       (projectile-configure-project-cmd . "meow") (javascript-backend . tide)
+       (javascript-backend . tern) (javascript-backend . lsp))))
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(default ((t (:background nil)))))
+  )
