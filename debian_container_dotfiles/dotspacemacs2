@@ -32,7 +32,9 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(csv
+   '(yaml
+     systemd
+     csv
      python
      javascript
      tern
@@ -48,20 +50,16 @@ This function should only modify configuration layer settings."
      shell
      org
      cmake
-     robot-framework
-     yaml
-     ;; XXX: ranger package recently broke for this build. Workaround:
-     ;; Add (require hydra) in ranger.el at the top
      (ranger :variables ranger-override-dired 'ranger
              ranger-show-preview t
              ranger-use-hydra t)
      copy-as-format
+     treemacs
      llm-client
      (ibuffer :variables ibuffer-group-buffers-by 'projects)
      docker
      (tabs :variables tabs-selected-tab-bar 'over
-           tabs-icons nil)
-     treemacs)
+           tabs-icons nil))
 
 
    ;; List of additional packages that will be installed without being wrapped
@@ -75,7 +73,7 @@ This function should only modify configuration layer settings."
    dotspacemacs-additional-packages '(yasnippet-snippets)
 
    ;; A list of packages that cannot be updated.
-   ;; XXX: Prevent ranger package update blowing away the local change
+   ;; ranger is frozen to avoid blowing away local "require hydra" workaround
    dotspacemacs-frozen-packages '(ranger)
 
    ;; A list of packages that will not be installed and loaded.
@@ -219,7 +217,6 @@ It should only modify the values of Spacemacs settings."
    ;; `:location' to download the theme package, refer the themes section in
    ;; DOCUMENTATION.org for the full theme specifications.
    dotspacemacs-themes '(gotham
-                         soft-charcoal
                          planet
                          spacemacs-dark
                          spacemacs-light
@@ -235,6 +232,7 @@ It should only modify the values of Spacemacs settings."
                          solarized-dark-high-contrast
                          solarized-gruvbox-dark
                          soft-stone
+                         soft-charcoal
                          seti
                          reverse
                          railscasts
@@ -244,7 +242,11 @@ It should only modify the values of Spacemacs settings."
                          monokai
                          molokai
                          moe-dark
-                         moe-light)
+                         moe-light
+                         modus-operandi-tinted
+                         modus-vivendi
+                         modus-vivendi-tinted
+                         modus-vivendi-tritanopia)
 
    ;; Set the theme for the Spaceline. Supported themes are `spacemacs',
    ;; `all-the-icons', `custom', `doom', `vim-powerline' and `vanilla'. The
@@ -253,8 +255,8 @@ It should only modify the values of Spacemacs settings."
    ;; refer to the DOCUMENTATION.org for more info on how to create your own
    ;; spaceline theme. Value can be a symbol or list with additional properties.
    ;; (default '(spacemacs :separator wave :separator-scale 1.5))
-   dotspacemacs-mode-line-theme '(spacemacs :separator wave :separator-scale 1.5)
-   ;;dotspacemacs-mode-line-theme '(custom :separator wave :separator-scale 1.5)
+   ;;dotspacemacs-mode-line-theme '(spacemacs :separator wave :separator-scale 1.5)
+   dotspacemacs-mode-line-theme '(custom :separator wave :separator-scale 1.5)
 
    ;; If non-nil the cursor color matches the state color in GUI Emacs.
    ;; (default t)
@@ -593,14 +595,62 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
-  (defun spaceline-custom-theme (&rest additional-segments)
-    "My custom spaceline theme."
-    (spaceline-compile
-      `(major-mode (minor-modes :when active) buffer-id)
-      `((line-column :separator " | " :priority 3)
-        ,@additional-segments))
-    (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
-  )
+
+  (with-eval-after-load 'spaceline
+    (spaceline-define-segment current-centaur-tab-group
+      "Custom segment that shows the current tab group, given by my-centaur-tabs-custom-group"
+      ;; We could just return the variable, but this is left for possible future customization
+      (when my-centaur-tabs-custom-group
+        (format "%s" my-centaur-tabs-custom-group)))
+
+    (defun spaceline-custom-theme (&rest additional-segments)
+      "My custom spaceline theme."
+      (spaceline-compile
+        ;; left side
+        '((("L:"    persp-name
+            "| WS:" workspace-number
+            "| W:"  window-number
+            "| TG:" current-centaur-tab-group)
+           :fallback evil-state
+           :face highlight-face
+           :priority 100)
+          ;;(anzu :priority 95)
+          auto-compile
+          ;;((buffer-modified buffer-size buffer-id remote-host)
+          ;; :priority 98)
+          ((buffer-modified buffer-size remote-host)
+           :priority 98)
+          (major-mode :priority 79)
+          (process :when active)
+          ((flycheck-error flycheck-warning flycheck-info)
+           :when active
+           :priority 89)
+          (minor-modes :when active
+                       :priority 9)
+          (mu4e-alert-segment :when active)
+          (erc-track :when active)
+          (version-control :when active
+                           :priority 78)
+          (org-pomodoro :when active)
+          (org-clock :when active)
+          nyan-cat)
+
+        ;; right side
+        '(which-function
+          (purpose :priority 94)
+          (battery :when active)
+          (selection-info :priority 95)
+          input-method
+          ((buffer-encoding-abbrev
+            point-position
+            line-column)
+           :separator " | "
+           :priority 96)
+          (global :when active)
+          (buffer-position :priority 99)
+          (hud :priority 99)))
+
+      (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))))
 
 (defun dotspacemacs/user-config ()
   "Configuration for user code:
@@ -608,24 +658,24 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
+
   ;; Add mnemonic for configure projectile project
   (spacemacs/set-leader-keys "pC" 'projectile-configure-project)
 
   ;; Add useful user binding mnemonics
-
-  ;; SPC o s: Visit yasnippet file
-  ;; Shorthand for: 'yas-visit-snippet-file
+  ;; SPC o s: Open applicable yasnippet files
+  ;; Shorthand for: C-c & C-v
   (spacemacs/set-leader-keys "os" 'yas-visit-snippet-file)
   (spacemacs/declare-prefix "os" "Visit snippet file")
-
-  ;; SPC o x: Toggle hexl-mode
-  (spacemacs/set-leader-keys "ox" 'hexl-mode)
-  (spacemacs/declare-prefix "ox" "hex mode")
 
   ;; SPC o T: Terminal that plays nicely with tmux and readline
   ;; Shorthand for: SPC a t s T
   (spacemacs/set-leader-keys "oT" 'spacemacs/shell-pop-term)
   (spacemacs/declare-prefix "oT" "pop-terminal")
+
+  ;; SPC o x: Activate hexl-mode
+  (spacemacs/set-leader-keys "ox" 'hexl-mode)
+  (spacemacs/declare-prefix "ox" "hex mode")
 
   ;; SPC o d r: Open ranger
   (spacemacs/declare-prefix "od" "open directory")
@@ -843,11 +893,11 @@ before packages are loaded."
   (setq package-check-signature nil)
 
   ;; Useful layout for GDB debugging
-  (setq-default gdb-many-windows t)
+  (setq gdb-many-windows t)
 
   ;; Enable local values set in .dir-locals.el
   ;; Used to save compilation command and other project(ile)-specific stuff
-  (setq-default enable-dir-local-variables t)
+  (setq enable-dir-local-variables t)
 
   ;; Set tab width to 4 spaces
   (setq-default tab-width 4)
@@ -890,18 +940,16 @@ before packages are loaded."
 
   ;; magit-todos-keywords-list had to be edited with customize-group
 
-  ;; Enable yasnippet minor mode everywhere
+  ;; Enable yasnippet global mode
   (yas-global-mode)
-  (add-hook 'yas-minor-mode-hook (lambda()
+  (add-hook 'yas-minor-mode-hook (lambda ()
                                    (yas-activate-extra-mode 'fundamental-mode)))
 
   ;; Add configuration for Gemini
   (setq gptel-model 'gemini-pro-latest
         gptel-backend (gptel-make-gemini "Gemini Pro"
                         :key "YOURKEYHERE"
-                        :stream t))
-
-  )
+                        :stream t)))
 
 
 ;; Do not write anything past this comment. This is where Emacs will
@@ -916,81 +964,89 @@ This function is called at the very end of Spacemacs initialization."
    ;; If you edit it by hand, you could mess it up, so be careful.
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
-   '(gc-cons-threshold 100000000)
-   '(magit-todos-keywords '("TODO" "FIXME" "XXX"))
+   '(compilation-skip-threshold 2)
+   '(magit-todos-keywords '("TODO" "FIXME" "XXX" "TEMP"))
    '(package-selected-packages
-     '(docker tablist aio dockerfile-mode multiple-cursors load-env-vars skewer-mode js2-mode json-snatcher pyvenv pythonic simple-httpd vmd-mode zonokai-emacs zenburn-theme zen-and-art-theme yasnippet-snippets yaml-mode ws-butler writeroom-mode winum white-sand-theme which-key wgrep web-beautify vundo volatile-highlights vi-tilde-fringe undo-fu-session undo-fu underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toxi-theme toc-org tern terminal-here term-cursor tao-theme tangotango-theme tango-plus-theme tango-2-theme symon symbol-overlay sunny-day-theme sublime-themes subatomic256-theme subatomic-theme string-inflection string-edit-at-point sphinx-doc spacemacs-whitespace-cleanup spacemacs-purpose-popwin spaceline spacegray-theme space-doc soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme smeargle shell-pop seti-theme robot-mode reverse-theme restart-emacs rebecca-theme rainbow-delimiters railscasts-theme quickrun python-pytest pylookup pyenv-mode pydoc py-isort purple-haze-theme professional-theme prettier-js popwin poetry planet-theme pippel pipenv pip-requirements phoenix-dark-pink-theme phoenix-dark-mono-theme pcre2el password-generator paradox page-break-lines overseer orgit-forge organic-green-theme org-superstar org-rich-yank org-projectile org-present org-pomodoro org-mime org-download org-contrib org-cliplink open-junk-file omtose-phellack-themes oldlace-theme occidental-theme obsidian-theme npm-mode nodejs-repl noctilux-theme naquadah-theme nameless mustang-theme multi-vterm multi-term multi-line monokai-theme monochrome-theme molokai-theme moe-theme modus-themes minimal-theme material-theme markdown-toc madhat2r-theme macrostep lush-theme lsp-ui lsp-treemacs lsp-origami lorem-ipsum livid-mode live-py-mode link-hint light-soap-theme kaolin-themes json-reformat json-navigator json-mode js2-refactor js-doc jbeans-theme jazz-theme ir-black-theme inspector inkpot-theme info+ indent-guide hybrid-mode hungry-delete htmlize holy-mode hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt heroku-theme hemisu-theme helm-xref helm-swoop helm-pydoc helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-lsp helm-ls-git helm-descbinds helm-ctest helm-company helm-comint helm-c-yasnippet helm-ag hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme google-translate golden-ratio gnuplot gitignore-templates git-timemachine git-modes git-messenger git-link gh-md gandalf-theme flycheck-pos-tip flycheck-package flycheck-elsa flatui-theme flatland-theme farmhouse-themes fancy-battery eziam-themes eyebrowse expand-region exotica-theme evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-evilified-state evil-escape evil-easymotion evil-collection evil-cleverparens evil-args evil-anzu eval-sexp-fu espresso-theme eshell-z eshell-prompt-extras esh-help emr elisp-slime-nav elisp-demos elisp-def ef-themes editorconfig edit-indirect eat dumb-jump drag-stuff dracula-theme dotenv-mode doom-themes django-theme disable-mouse dired-quick-sort diminish devdocs define-word darktooth-theme darkokai-theme darkmine-theme dakrone-theme cython-mode cyberpunk-theme csv-mode column-enforce-mode color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized code-review code-cells cmake-mode clues-theme clean-aindent-mode chocolate-theme cherry-blossom-theme centered-cursor-mode busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme avy-jump-helm-line auto-yasnippet auto-highlight-symbol auto-compile apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme all-the-icons alect-themes aggressive-indent afternoon-theme ace-link))
+     '(ace-link afternoon-theme aggressive-indent alect-themes all-the-icons
+                ample-theme ample-zen-theme anaconda-mode anti-zenburn-theme
+                apropospriate-theme auto-compile auto-highlight-symbol
+                avy-jump-helm-line badwolf-theme birds-of-paradise-plus-theme
+                bubbleberry-theme busybee-theme centaur-tabs centered-cursor-mode
+                cherry-blossom-theme chocolate-theme clean-aindent-mode
+                clues-theme cmake-mode code-cells code-review
+                color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow
+                column-enforce-mode company copy-as-format cpp-auto-include
+                csv-mode cyberpunk-theme cython-mode dakrone-theme darkmine-theme
+                darkokai-theme darktooth-theme define-word devdocs diminish
+                dired-quick-sort disable-mouse disaster django-theme doom-themes
+                dotenv-mode dracula-theme drag-stuff dumb-jump eat edit-indirect
+                ef-themes elisp-def elisp-demos elisp-slime-nav ellama emr
+                esh-help eshell-prompt-extras eshell-z espresso-theme eval-sexp-fu
+                evil-anzu evil-args evil-cleverparens evil-collection
+                evil-easymotion evil-escape evil-evilified-state evil-exchange
+                evil-goggles evil-iedit-state evil-indent-plus evil-lion
+                evil-lisp-state evil-matchit evil-mc evil-nerd-commenter
+                evil-numbers evil-org evil-surround evil-textobj-line evil-tutor
+                evil-unimpaired evil-visual-mark-mode evil-visualstar
+                exotica-theme expand-region eyebrowse eziam-themes fancy-battery
+                farmhouse-themes flatland-theme flatui-theme flycheck
+                gandalf-theme gendoxy gh-md git-link git-messenger git-modes
+                git-timemachine gitignore-templates gnuplot golden-ratio
+                google-c-style google-translate gotham-theme gptel
+                grandshell-theme gruber-darker-theme gruvbox-theme
+                hc-zenburn-theme helm-ag helm-comint helm-ctest helm-descbinds
+                helm-ls-git helm-make helm-mode-manager helm-org helm-org-rifle
+                helm-projectile helm-purpose helm-pydoc helm-swoop helm-xref
+                hemisu-theme heroku-theme hide-comnt highlight-indentation
+                highlight-numbers highlight-parentheses hl-todo holy-mode htmlize
+                hungry-delete hybrid-mode ibuffer-projectile indent-guide info+
+                inkpot-theme inspector ir-black-theme jazz-theme jbeans-theme
+                journalctl-mode js-doc js2-refactor json-mode json-navigator
+                json-reformat kaolin-themes light-soap-theme link-hint
+                live-py-mode livid-mode llm lorem-ipsum lush-theme macrostep
+                madhat2r-theme magit-delta magit-todos markdown-toc material-theme
+                memoize minimal-theme modus-themes moe-theme molokai-theme
+                monochrome-theme monokai-theme multi-line multi-term multi-vterm
+                mustang-theme nameless naquadah-theme nerd-icons nhexl-mode
+                noctilux-theme nodejs-repl npm-mode obsidian-theme
+                occidental-theme oldlace-theme omtose-phellack-themes
+                open-junk-file org-cliplink org-contrib org-download org-mime
+                org-pomodoro org-present org-projectile org-rich-yank
+                org-superstar organic-green-theme orgit-forge overseer
+                page-break-lines paradox password-generator pcre2el
+                phoenix-dark-mono-theme phoenix-dark-pink-theme pip-requirements
+                pipenv pippel planet-theme plz plz-event-source plz-media-type
+                poetry popwin prettier-js professional-theme purple-haze-theme
+                py-isort pydoc pyenv-mode pylookup python-pytest quickrun
+                railscasts-theme rainbow-delimiters ranger rebecca-theme
+                restart-emacs reverse-theme seti-theme shell-pop smeargle
+                smyx-theme soft-charcoal-theme soft-morning-theme soft-stone-theme
+                solarized-theme soothe-theme space-doc spacegray-theme spaceline
+                spaceline-all-the-icons spacemacs-purpose-popwin
+                spacemacs-whitespace-cleanup sphinx-doc string-edit-at-point
+                string-inflection subatomic-theme subatomic256-theme
+                sublime-themes sunny-day-theme symbol-overlay symon systemd
+                tango-2-theme tango-plus-theme tangotango-theme tao-theme
+                term-cursor terminal-here tern toc-org toxi-theme treemacs-evil
+                treemacs-icons-dired treemacs-magit treemacs-persp
+                treemacs-projectile twilight-anti-bright-theme
+                twilight-bright-theme twilight-theme ujelly-theme underwater-theme
+                undo-fu undo-fu-session vi-tilde-fringe vim-powerline
+                volatile-highlights vundo web-beautify wgrep white-sand-theme
+                winum writeroom-mode ws-butler xterm-color yaml-mode yapfify
+                yasnippet-snippets zen-and-art-theme zenburn-theme zonokai-emacs))
    '(safe-local-variable-values
-     '((projectile-project-run-cmd . "cd ~/Workspace/castelion/cstelion/seekerSecurityProcessor/application && ./flash.sh -f build/primary/hello_world_primary_core_cm33.elf -s -v")
-       (projectile-project-compilation-cmd . "cd ~/Workspace/castelion/cstelion/seekerSecurityProcessor/application && ./build.sh -p -b se -d -c flexspi_nor_debug")
-       (projectile-project-run-cmd . "cd ~/Workspace/castelion/cstelion/seekerSecurityProcessor && ./flash.sh")
-       (projectile-project-compilation-cmd . "cd ~/Workspace/castelion/cstelion/seekerSecurityProcessor/application && ./build.sh -p -b se -d")
-       (projectile-project-compilation-cmd . "cd ~/Workspace/sec_mcux/application && ./build.sh -p -b se -d")
-       (projectile-project-compilation-cmd . "cd ~/Workspace/sec_mcux/application && west build -p always -b selenium --sysbuild ./primary -Dcore_id=cm33 -DCUSTOM_BOARD_ROOT=/home/scarrion/Workspace/sec_mcux/application/_boards --toolchain=armgcc")
-       (projectile-project-run-cmd . "cd ~/Workspace/sec_mcux && ./flash.sh")
-       (projectile-project-compilation-cmd . "cd ~/Workspace/sec_mcux/application && west build -p always -b selenium --sysbuild ./primary -Dcore_id=cm33 -DCUSTOM_BOARD_ROOT=/home/scarrion/Workspace/sec_mcux/application/_boards --config flexspi_nor_debug --toolchain=armgcc")
-       (projectile-project-run-cmd . "cd ~/Workspace/sec_mcux/application && ./flash.sh")
-       (projectile-project-compilation-cmd . "cd ~/Workspace/sec_mcux/application && west build -p always -b selenium ./primary -Dcore_id=cm33 -DCUSTOM_BOARD_ROOT=/home/scarrion/Workspace/sec_mcux/application/_boards --config flexspi_nor_debug --toolchain=armgcc")
-       (projectile-project-compilation-cmd . "cd ~/Workspace/sec_mcux/application && ./flash.sh")
-       (projectile-project-compilation-cmd . "cd ~/Workspace/sec_mcux/application && west build -p always -b selenium --sysbuild ./primary -Dcore_id=cm33 --config flexspi_nor_debug --toolchain=armgcc")
-       (projectile-project-compilation-cmd . "cd ~/Workspace/sec_mcux/application && west build -p always -b evkmimxrt1180 --sysbuild ./primary -Dcore_id=cm33 --config flexspi_nor_debug --toolchain=armgcc")
-       (projectile-project-compilation-cmd . "cd ~/Workspace/sec_mcux && west build -p always -b evkmimxrt1180 --sysbuild ./primary -Dcore_id=cm33 --config flexspi_nor_debug --toolchain=armgcc")
-       (projectile-project-compilation-cmd . "west build -p always -b evkmimxrt1180 --sysbuild ./primary -Dcore_id=cm33 --config flexspi_nor_debug --toolchain=armgcc")
-       (projectile-project-compilation-dir . "/home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor")
-       (eval setq projectile-project-run-cmd "cd /home/scarrion/Workspace/churros-litterbox/zephyr-imx8-zperf && west flash --no-rebuild --build-dir ./blinky/build/blinky --runner=jlink --device=MIMXRT1189xxx8_M33 -O \"-jlinkscriptfile /home/scarrion/Workspace/churros-litterbox/zephyr-imx8-zperf/zephyr/boards/nxp/mimxrt1180_evk/jlinkscript/evkmimxrt1180_cm33.jlinkscript\" && west flash --no-rebuild --build-dir ./blinky/build/zperf --runner=jlink --device=MIMXRT1189xxx8_M7 -O \"-jlinkscriptfile /home/scarrion/Workspace/churros-litterbox/zephyr-imx8-zperf/zephyr/boards/nxp/mimxrt1180_evk/jlinkscript/evkmimxrt1180_cm7.jlinkscript\"")
-       (eval setq projectile-project-compilation-cmd "cd /home/scarrion/Workspace/churros-litterbox/zephyr-imx8-zperf/blinky && ./build.sh")
-       (eval setq projectile-project-compilation-cmd "cd /home/scarrion/Workspace/churros-litterbox/zephyr-imx8-zperf/blink && ./build.sh")
-       (eval setq projectile-project-run-cmd "cd /home/scarrion/Workspace/churros-litterbox/zephyr-imx8-zperf/blinky && west flash --no-rebuild --build-dir ./blinky/build/blinky --runner=jlink --device=MIMXRT1189xxx8_M33 -O \"-jlinkscriptfile /home/scarrion/Workspace/churros-litterbox/zephyr-imx8-zperf/zephyr/boards/nxp/mimxrt1180_evk/jlinkscript/evkmimxrt1180_cm33.jlinkscript\" && west flash --no-rebuild --build-dir ./blinky/build/zperf --runner=jlink --device=MIMXRT1189xxx8_M7 -O \"-jlinkscriptfile /home/scarrion/Workspace/churros-litterbox/zephyr-imx8-zperf/zephyr/boards/nxp/mimxrt1180_evk/jlinkscript/evkmimxrt1180_cm7.jlinkscript\"")
-       (eval setq projectile-project-compilation-cmd "/home/scarrion/Workspace/churros-litterbox/zephyr-imx8-zperf/blinky/build.sh")
-       (eval setq projectile-project-root "/home/scarrion/Workspace/churros-litterbox/zephyr-imx8-zperf/blinky")
-       (eval setq compile-command "cd /home/scarrion/Workspace/churros-litterbox/zephyr-imx8-zperf/blinky && ./build.sh")
-       (projectile-project-run-cmd . "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && west flash --no-rebuild --build-dir ./application/build/application --runner=jlink --device=MIMXRT1189xxx8_M33 -O \"-jlinkscriptfile /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor/zephyr/boards/nxp/mimxrt1180_evk/jlinkscript/evkmimxrt1180_cm33.jlinkscript\" && west flash --no-rebuild --build-dir ./application/build/proxy_application --runner=jlink --device=MIMXRT1189xxx8_M7 -O \"-jlinkscriptfile /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor/zephyr/boards/nxp/mimxrt1180_evk/jlinkscript/evkmimxrt1180_cm7.jlinkscript\"")
-       (projectile-project-run-cmd . "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && west flash --no-rebuild --build-dir ./application/build --runner=linkserver --probe=\"#1\"")
-       (projectile-project-compilation-cmd . "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && ./application/build.sh --debug --pristine -b eval_j134")
-       (eval setq compile-command "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && ./application/build.sh --debug --pristine -b eval_j134")
-       (eval setq projectile-project-run-cmd "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && west flash --no-rebuild --build-dir ./application/build/application --runner=jlink --device=MIMXRT1189xxx8_M33 -O \"-jlinkscriptfile /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor/zephyr/boards/nxp/mimxrt1180_evk/jlinkscript/evkmimxrt1180_cm33.jlinkscript\" && west flash --no-rebuild --build-dir ./application/build/proxy_application --runner=jlink --device=MIMXRT1189xxx8_M7 -O \"-jlinkscriptfile /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor/zephyr/boards/nxp/mimxrt1180_evk/jlinkscript/evkmimxrt1180_cm7.jlinkscript\"")
-       (eval setq projectile-project-run-cmd "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && west flash --no-rebuild --build-dir ./application/build/application --runner=jlink --device=MIMXRT1189xxx8_M33 -O \"-jlinkscriptfile /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor/zephyr/boards/nxp/mimxrt1180_evk/jlinkscript/evkmimxrt1180_cm33.jlinkscript\" && west flash --no-rebuild --build-dir ./application/build/application --runner=jlink --device=MIMXRT1189xxx8_M7 -O \"-jlinkscriptfile /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor/zephyr/boards/nxp/mimxrt1180_evk/jlinkscript/evkmimxrt1180_cm7.jlinkscript\"")
-       (eval setq projectile-project-run-cmd "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && west flash --no-rebuild --build-dir ./application/build/application --runner=jlink --device=MIMXRT1189xxx8_M33 -O \"-jlinkscriptfile /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor/zephyr/boards/nxp/mimxrt1180_evk/jlinkscript/evkmimxrt1180_cm33.jlinkscript\"")
-       (eval setq projectile-project-run-cmd "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && west flash --no-rebuild --build-dir ./application/build --runner=linkserver --probe=\"#1\"")
-       (eval setq compile-command "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && ./application/build.sh --debug --pristine")
-       (eval setq projectile-project-run-cmd "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && west flash --skip-rebuild --build-dir ./application/build --runner=linkserver --probe=\"#1\"")
-       (eval setq projectile-project-compilation-dir "cstelion/seekerSecurityProcessor")
-       (eval setq projectile-project-compilation-dir "/home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor")
-       (eval setq projectile-project-run-cmd "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && west --skip-rebuild --build-dir ./application/build --runner=linkserver --probe=\"#1\"")
-       (eval setq projectile-project-compilation-cmd "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && ./application/build.sh --debug")
-       (eval setq compile-command "cd /home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor && ./application/build.sh --debug")
-       (eval setq projectile-project-root "/home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor")
-       (eval setq projectile-project-compilation-cmd "./application/build.sh --debug")
-       (eval setq compile-command "./application/build.sh --debug")
-       (eval setq projectile-project-run-cmd "west --skip-rebuild --build-dir ./application/build --runner=linkserver --probe=\"#1\"")
-       (eval setq projectile-project-search-path
-             '("/tmp/noproject"))
-       (eval setq projectile-auto-discover nil)
-       (eval setq projectile-track-known-project-automatically nil)
-       (eval setq projectile-project-type nil)
-       (eval setq projectile-project-type "generic")
-       (eval setq projectile-project-type 'generic)
-       (eval setq projectile-enable-caching nil)
-       (eval setq projectile-compilation-cmd-map nil)
-       (eval setq compilation-read-command nil)
-       (eval setq projectile-project-compilation-cmd "echo testeroni2")
-       (eval setq projectile-project-compilation-command "echo testeroni2")
-       (eval setq projectile-compilation-command "echo testeroni2")
-       (eval
-        (setq projectile-compilation-command "echo testeroni2"))
-       (eval
-        (setq compile-command "echo testeroni"))
-       (eval
-        (setq compile-command "echo testeroni")
-        (setq projectile-project-compilation-command "echo testeroni2"))
-       (eval setq compile-command "echo testeroni")
-       (eval setq
-             (compile-command "echo testeroni"))
-       (projectile-project-compilation-cmd . "./application/build.sh --debug")
-       (projectile-project-root . "/home/scarrion/Workspace/castelion/cstelion/seekerSecurityProcessor")
-       (javascript-backend . tide)
-       (javascript-backend . tern)
-       (javascript-backend . lsp))))
+     '((cmake-tab-width . 2) (compilation-skip-threshold . 0)
+       (compilation-skip-threshold . 2) (compilation-skip-threshold . "2")
+       (projectile-project-compilation-cmd
+        . "west build --pristine -b qemu_cortex_m3")
+       (projectile-project-install-cmd . "glub")
+       (projectile-project-configure-cmd . "meow")
+       (projectile-project-compilation-cmd . "bark")
+       (projectile-install-project-cmd . "glub")
+       (projectile-compile-project-cmd . "bark")
+       (projectile-configure-project-cmd . "meow") (javascript-backend . tide)
+       (javascript-backend . tern) (javascript-backend . lsp))))
   (custom-set-faces
    ;; custom-set-faces was added by Custom.
    ;; If you edit it by hand, you could mess it up, so be careful.
