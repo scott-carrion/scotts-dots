@@ -70,7 +70,8 @@ This function should only modify configuration layer settings."
    ;; `dotspacemacs/user-config'. To use a local version of a package, use the
    ;; `:location' property: '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
-   dotspacemacs-additional-packages '(yasnippet-snippets)
+   dotspacemacs-additional-packages '(yasnippet-snippets
+                                      nyan-mode)
 
    ;; A list of packages that cannot be updated.
    ;; ranger is frozen to avoid blowing away local "require hydra" workaround
@@ -633,7 +634,7 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
                            :priority 78)
           (org-pomodoro :when active)
           (org-clock :when active)
-          nyan-cat)
+          (nyan-cat :when active :priority 99))
 
         ;; right side
         '(which-function
@@ -663,6 +664,14 @@ before packages are loaded."
   (spacemacs/set-leader-keys "pC" 'projectile-configure-project)
 
   ;; Add useful user binding mnemonics
+  ;; SPC o n: Toggle nyan cat mode. Very important
+  ;; Shorthand for: nyan-mode
+  (spacemacs/set-leader-keys "on" 'nyan-mode)
+  (spacemacs/declare-prefix "on" "nyan-cat")
+  (setq nyan-animate-nyancat t)
+  (setq nyan-wavy-trail t)
+  (setq nyan-animation-frame-interval 0.08)
+
   ;; SPC o s: Open applicable yasnippet files
   ;; Shorthand for: C-c & C-v
   (spacemacs/set-leader-keys "os" 'yas-visit-snippet-file)
@@ -1008,7 +1017,7 @@ This function is called at the very end of Spacemacs initialization."
                 memoize minimal-theme modus-themes moe-theme molokai-theme
                 monochrome-theme monokai-theme multi-line multi-term multi-vterm
                 mustang-theme nameless naquadah-theme nerd-icons nhexl-mode
-                noctilux-theme nodejs-repl npm-mode obsidian-theme
+                noctilux-theme nodejs-repl npm-mode nyan-mode obsidian-theme
                 occidental-theme oldlace-theme omtose-phellack-themes
                 open-junk-file org-cliplink org-contrib org-download org-mime
                 org-pomodoro org-present org-projectile org-rich-yank
