@@ -663,6 +663,9 @@ before packages are loaded."
   ;; Add mnemonic for configure projectile project
   (spacemacs/set-leader-keys "pC" 'projectile-configure-project)
 
+  ;; Add mnemonic for delete all other windows
+  (spacemacs/set-leader-keys "wa" 'delete-other-windows)
+
   ;; Add useful user binding mnemonics
   ;; SPC o n: Toggle nyan cat mode. Very important
   ;; Shorthand for: nyan-mode
@@ -679,7 +682,7 @@ before packages are loaded."
 
   ;; SPC o T: Terminal that plays nicely with tmux and readline
   ;; Shorthand for: SPC a t s T
-  (spacemacs/set-leader-keys "oT" 'spacemacs/shell-pop-term)
+  (spacemacs/set-leader-keys "oT" 'spacemacs/shell-pop-vterm)
   (spacemacs/declare-prefix "oT" "pop-terminal")
 
   ;; SPC o x: Activate hexl-mode
@@ -751,13 +754,16 @@ before packages are loaded."
                                          " *Mini"
                                          "*straight"
                                          "*Default-term"
+                                         "*Default-vterm"
                                          "*compilation*"
                                          "*temp"))
 
   (with-eval-after-load 'centaur-tabs
     (defun centaur-tabs-buffer-groups ()
       "SCC custom buffer/tab group rules for manual assignment. Return the custom group if set, otherwise return 'Ungrouped'."
-      (list (or my-centaur-tabs-custom-group "Ungrouped")))
+      (list (cond (my-centaur-tabs-custom-group my-centaur-tabs-custom-group)
+                  ((string-equal "*" (substring (buffer-name) 0 1)) "_Emacs")
+                  (t "Ungrouped"))))
 
     ;; This will regroup the tab bar
     (centaur-tabs-group-buffer-groups)
@@ -895,8 +901,23 @@ before packages are loaded."
   (spacemacs/declare-prefix "otG" "assign tab to group")
   (spacemacs/declare-prefix "otN" "create new tab in group")
 
-  ;; TODO: I'd like to be able to see the current tab group name somewhere
-  ;;(centaur-tabs-get-group-name (current-buffer)
+  ;; Mnemonics to save current layout and desktop, then quit
+  ;; SPC o p s: Quicksave current perspective to "latest"
+  ;; SPC o p l: Quickload current perspective to "latest"
+  ;;
+  ;; NOTE: For this to work, my-centaur-tabs-custom-group must be added to desktop-locals-to-save in customize menu for desktop.el
+  (spacemacs/declare-prefix "op" "perspectives")
+  (spacemacs/set-leader-keys
+    "ops" (lambda ()
+            (interactive)
+            (persp-save-state-to-file "~/.emacs.d/.cache/persp/latest/layout")
+            (desktop-save "~/.emacs.d/.cache/persp/latest"))
+    "opl" (lambda ()
+            (interactive)
+            (persp-load-state-from-file "~/.emacs.d/.cache/persp/latest/layout")
+            (desktop-read "~/.emacs.d/.cache/persp/latest")))
+  (spacemacs/declare-prefix "ops" "Quicksave perspective")
+  (spacemacs/declare-prefix "opl" "Quickload perspective")
 
   ;; Disable package GPG key checking
   (setq package-check-signature nil)
@@ -953,6 +974,9 @@ before packages are loaded."
   (yas-global-mode)
   (add-hook 'yas-minor-mode-hook (lambda ()
                                    (yas-activate-extra-mode 'fundamental-mode)))
+
+  (setq desktop-save-mode 1)
+  (setq c-default-style "user")
 
   ;; Add configuration for Gemini
   (setq gptel-model 'gemini-pro-latest
