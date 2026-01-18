@@ -915,9 +915,20 @@ before packages are loaded."
     "opl" (lambda ()
             (interactive)
             (persp-load-state-from-file "~/.emacs.d/.cache/persp/latest/layout")
-            (desktop-read "~/.emacs.d/.cache/persp/latest")))
-  (spacemacs/declare-prefix "ops" "Quicksave perspective")
-  (spacemacs/declare-prefix "opl" "Quickload perspective")
+            (desktop-read "~/.emacs.d/.cache/persp/latest"))
+    "opS" (lambda (persp-name)
+            (interactive "sSave perspectives as: ")
+            (persp-save-state-to-file (format "~/.emacs.d/.cache/persp/%s/layout" (or persp-name "latest")))
+            (desktop-save (format "~/.emacs.d/.cache/persp/%s" (or persp-name "latest"))))
+    "opL" (lambda (persp-name)
+            (interactive "sLoad perspective name: ")
+            (persp-load-state-from-file (format "~/.emacs.d/.cache/persp/%s/layout" (or persp-name "latest")))
+            (desktop-read (format "~/.emacs.d/.cache/persp/%s" (or persp-name "latest")))))
+
+  (spacemacs/declare-prefix "ops" "Quicksave perspectives")
+  (spacemacs/declare-prefix "opl" "Quickload perspectives")
+  (spacemacs/declare-prefix "opS" "Save perspectives as")
+  (spacemacs/declare-prefix "opL" "Load perspectives")
 
   ;; Disable package GPG key checking
   (setq package-check-signature nil)
@@ -998,6 +1009,15 @@ This function is called at the very end of Spacemacs initialization."
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
    '(compilation-skip-threshold 2)
+   '(desktop-locals-to-save
+     '(desktop-locals-to-save truncate-lines case-fold-search case-replace
+                              fill-column overwrite-mode change-log-default-name
+                              line-number-mode column-number-mode
+                              size-indication-mode buffer-file-coding-system
+                              buffer-display-time indent-tabs-mode tab-width
+                              indicate-buffer-boundaries indicate-empty-lines
+                              show-trailing-whitespace
+                              my-centaur-tabs-custom-group))
    '(magit-todos-keywords '("TODO" "FIXME" "XXX" "TEMP"))
    '(package-selected-packages
      '(ace-link afternoon-theme aggressive-indent alect-themes all-the-icons
