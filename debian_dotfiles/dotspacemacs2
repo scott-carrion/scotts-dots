@@ -74,8 +74,7 @@ This function should only modify configuration layer settings."
                                       nyan-mode)
 
    ;; A list of packages that cannot be updated.
-   ;; ranger is frozen to avoid blowing away local "require hydra" workaround
-   dotspacemacs-frozen-packages '(ranger)
+   dotspacemacs-frozen-packages '()
 
    ;; A list of packages that will not be installed and loaded.
    dotspacemacs-excluded-packages '()
