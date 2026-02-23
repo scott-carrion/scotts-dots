@@ -761,6 +761,7 @@ before packages are loaded."
                                          "*Default-term"
                                          "*Default-vterm"
                                          "*compilation*"
+                                         "*"
                                          "*temp"))
 
   (with-eval-after-load 'centaur-tabs
@@ -768,7 +769,7 @@ before packages are loaded."
       "SCC custom buffer/tab group rules for manual assignment. Return the custom group if set, otherwise return 'Ungrouped'."
       (list (cond (my-centaur-tabs-custom-group my-centaur-tabs-custom-group)
                   ((string-equal "*" (substring (buffer-name) 0 1)) "_Emacs")
-                  ((string-equal "magit" (substring (buffer-name) 0 5)) "_Emacs")
+                  ((string-prefix-p "magit" (buffer-name)) "_Emacs")
                   (t "Ungrouped"))))
 
     ;; This will regroup the tab bar
@@ -834,7 +835,6 @@ before packages are loaded."
     ;; 3. Function: Apply the stashed group to the new file
     (defun my-apply-group-on-treemacs-open (&rest _)
       "Apply the stashed group to the newly opened buffer."
-      (message "XXX control entered stash apply func")
       (when my-treemacs-group-stash
         (setq my-centaur-tabs-custom-group my-treemacs-group-stash)
         ;; Refresh tabs
