@@ -44,18 +44,20 @@ This function should only modify configuration layer settings."
      helm
      xclipboard
      ;; lsp
-     markdown
+     (markdown :variables markdown-live-preview-engine 'vmd)
      multiple-cursors
      themes-megapack
      shell
      org
      cmake
      (ranger :variables ranger-override-dired 'ranger
-             ranger-show-preview t)
+             ranger-show-preview t
+             ranger-use-hydra t)
      copy-as-format
      treemacs
      llm-client
      (ibuffer :variables ibuffer-group-buffers-by 'projects)
+     docker
      (tabs :variables tabs-selected-tab-bar 'over
            tabs-icons nil))
 
@@ -68,11 +70,11 @@ This function should only modify configuration layer settings."
    ;; `dotspacemacs/user-config'. To use a local version of a package, use the
    ;; `:location' property: '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
-   dotspacemacs-additional-packages '(yasnippet-snippets)
+   dotspacemacs-additional-packages '(yasnippet-snippets
+                                      nyan-mode)
 
    ;; A list of packages that cannot be updated.
-   ;; ranger is frozen to avoid blowing away local "require hydra" workaround
-   dotspacemacs-frozen-packages '(ranger)
+   dotspacemacs-frozen-packages '()
 
    ;; A list of packages that will not be installed and loaded.
    dotspacemacs-excluded-packages '()
@@ -214,7 +216,9 @@ It should only modify the values of Spacemacs settings."
    ;; package can be defined with `:package', or a theme can be defined with
    ;; `:location' to download the theme package, refer the themes section in
    ;; DOCUMENTATION.org for the full theme specifications.
-   dotspacemacs-themes '(gotham
+   dotspacemacs-themes '(doom-Iosvkem
+                         moe-dark
+                         gotham
                          planet
                          spacemacs-dark
                          spacemacs-light
@@ -253,8 +257,8 @@ It should only modify the values of Spacemacs settings."
    ;; refer to the DOCUMENTATION.org for more info on how to create your own
    ;; spaceline theme. Value can be a symbol or list with additional properties.
    ;; (default '(spacemacs :separator wave :separator-scale 1.5))
-   dotspacemacs-mode-line-theme '(spacemacs :separator wave :separator-scale 1.5)
-   ;;dotspacemacs-mode-line-theme '(custom :separator wave :separator-scale 1.5)
+   ;;dotspacemacs-mode-line-theme '(spacemacs :separator wave :separator-scale 1.5)
+   dotspacemacs-mode-line-theme '(custom :separator wave :separator-scale 1.5)
 
    ;; If non-nil the cursor color matches the state color in GUI Emacs.
    ;; (default t)
@@ -593,14 +597,62 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
-  (defun spaceline-custom-theme (&rest additional-segments)
-    "My custom spaceline theme."
-    (spaceline-compile
-      `(major-mode (minor-modes :when active) buffer-id)
-      `((line-column :separator " | " :priority 3)
-        ,@additional-segments))
-    (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
-  )
+
+  (with-eval-after-load 'spaceline
+    (spaceline-define-segment current-centaur-tab-group
+      "Custom segment that shows the current tab group, given by my-centaur-tabs-custom-group"
+      ;; We could just return the variable, but this is left for possible future customization
+      (when my-centaur-tabs-custom-group
+        (format "%s" my-centaur-tabs-custom-group)))
+
+    (defun spaceline-custom-theme (&rest additional-segments)
+      "My custom spaceline theme."
+      (spaceline-compile
+        ;; left side
+        '((("L:"    persp-name
+            "| WS:" workspace-number
+            "| W:"  window-number
+            "| TG:" current-centaur-tab-group)
+           :fallback evil-state
+           :face highlight-face
+           :priority 100)
+          ;;(anzu :priority 95)
+          auto-compile
+          ;;((buffer-modified buffer-size buffer-id remote-host)
+          ;; :priority 98)
+          ((buffer-modified buffer-size remote-host)
+           :priority 98)
+          (major-mode :priority 79)
+          (process :when active)
+          ((flycheck-error flycheck-warning flycheck-info)
+           :when active
+           :priority 89)
+          (minor-modes :when active
+                       :priority 9)
+          (mu4e-alert-segment :when active)
+          (erc-track :when active)
+          (version-control :when active
+                           :priority 78)
+          (org-pomodoro :when active)
+          (org-clock :when active)
+          (nyan-cat :when active :priority 99))
+
+        ;; right side
+        '(which-function
+          (purpose :priority 94)
+          (battery :when active)
+          (selection-info :priority 95)
+          input-method
+          ((buffer-encoding-abbrev
+            point-position
+            line-column)
+           :separator " | "
+           :priority 96)
+          (global :when active)
+          (buffer-position :priority 99)
+          (hud :priority 99)))
+
+      (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))))
 
 (defun dotspacemacs/user-config ()
   "Configuration for user code:
@@ -612,15 +664,30 @@ before packages are loaded."
   ;; Add mnemonic for configure projectile project
   (spacemacs/set-leader-keys "pC" 'projectile-configure-project)
 
+  ;; Add mnemonic for delete all other windows
+  (spacemacs/set-leader-keys "wa" 'delete-other-windows)
+
   ;; Add useful user binding mnemonics
+  ;; SPC o n: Toggle nyan cat mode. Very important
+  ;; Shorthand for: nyan-mode
+  (spacemacs/set-leader-keys "on" 'nyan-mode)
+  (spacemacs/declare-prefix "on" "nyan-cat")
+  (setq nyan-animate-nyancat t)
+  (setq nyan-wavy-trail t)
+  (setq nyan-animation-frame-interval 0.08)
+
   ;; SPC o s: Open applicable yasnippet files
   ;; Shorthand for: C-c & C-v
   (spacemacs/set-leader-keys "os" 'yas-visit-snippet-file)
   (spacemacs/declare-prefix "os" "Visit snippet file")
 
   ;; SPC o T: Terminal that plays nicely with tmux and readline
-  ;; Shorthand for: SPC a t s T
-  (spacemacs/set-leader-keys "oT" 'spacemacs/shell-pop-term)
+  ;; If using powerline, make sure to add the following to themes/shell/<something>.json
+  ;; "use_non_breaking_spaces": false
+  ;; It gets rid of the distracting underscores in the prompt
+  ;; https://github.com/akermu/emacs-libvterm/issues/163
+  ;; Shorthand for: SPC a t s v
+  (spacemacs/set-leader-keys "oT" 'spacemacs/shell-pop-vterm)
   (spacemacs/declare-prefix "oT" "pop-terminal")
 
   ;; SPC o x: Activate hexl-mode
@@ -670,10 +737,39 @@ before packages are loaded."
   (defvar-local my-centaur-tabs-custom-group nil
     "The custom tab group name assigned to this buffer.")
 
+  ;; Set centaur tab cycle scope to visible tabs only
+  (setq centaur-tabs-cycle-scope 'tabs)
+
+  ;; Set buffers to exclude drawing a tab bar in
+  (setq centaur-tabs-excluded-prefixes '("*epc"
+                                         "*helm"
+                                         "*Helm"
+                                         " *which"
+                                         "*Compile-Log*"
+                                         "*Choices"
+                                         "*Process"
+                                         "*Calc"
+                                         "*lsp"
+                                         "*LSP"
+                                         "*company"
+                                         "*Flycheck"
+                                         "*Ediff"
+                                         "*ediff"
+                                         "*tramp"
+                                         " *Mini"
+                                         "*straight"
+                                         "*Default-term"
+                                         "*Default-vterm"
+                                         "*compilation*"
+                                         "*temp"))
+
   (with-eval-after-load 'centaur-tabs
     (defun centaur-tabs-buffer-groups ()
       "SCC custom buffer/tab group rules for manual assignment. Return the custom group if set, otherwise return 'Ungrouped'."
-      (list (or my-centaur-tabs-custom-group "Ungrouped")))
+      (list (cond (my-centaur-tabs-custom-group my-centaur-tabs-custom-group)
+                  ((string-equal "*" (substring (buffer-name) 0 1)) "_Emacs")
+                  ((string-equal "magit" (substring (buffer-name) 0 5)) "_Emacs")
+                  (t "Ungrouped"))))
 
     ;; This will regroup the tab bar
     (centaur-tabs-group-buffer-groups)
@@ -685,7 +781,133 @@ before packages are loaded."
       (setq my-centaur-tabs-custom-group (if (string-blank-p group-name) nil group-name))
       (centaur-tabs-group-buffer-groups)
       (centaur-tabs-display-update)
-      (message "Buffer assigned to group: %s" (or my-centaur-tabs-custom-group "Ungrouped"))))
+      (message "Buffer assigned to group: %s" (or my-centaur-tabs-custom-group "Ungrouped")))
+
+    (defun my-centaur-tabs-new-tab-same-group ()
+      "Open a new tab in the same group as the current buffer"
+      (interactive)
+      (let ((current-group (or my-centaur-tabs-custom-group "Ungrouped")))
+        (centaur-tabs--create-new-tab)
+        (if (not (null current-group)) (setq my-centaur-tabs-custom-group current-group)))))
+
+  ;; Tweaks to stash and pop the current tab group so that ranger/deer open files in the active tab group
+  (with-eval-after-load 'ranger
+    (defvar my-ranger-group-stash nil
+      "Stores the centaur-tabs group of the buffer where ranger was invoked.")
+
+    (defun my-stash-group-before-ranger (&rest _)
+      "Save the current buffer's group to the stash."
+      (setq my-ranger-group-stash (or my-centaur-tabs-custom-group "Ungrouped"))
+      (message "Ranger stash set to: %s" my-ranger-group-stash))
+
+    (advice-add 'ranger :before #'my-stash-group-before-ranger)
+    (advice-add 'deer :before #'my-stash-group-before-ranger)
+
+    (defun my-apply-group-after-ranger-open (&rest _)
+      "Apply the stashed group to the newly opened buffer."
+      (when my-ranger-group-stash
+        (setq my-centaur-tabs-custom-group my-ranger-group-stash)
+        ;; Refresh tabs so the change is visible immediately
+        (centaur-tabs-group-buffer-groups)
+        (centaur-tabs-display-update)
+        (message "Opened file in group: %s" my-ranger-group-stash)))
+
+    (advice-add 'ranger-find-file :after #'my-apply-group-after-ranger-open)
+    (advice-add 'ranger-find-file-other-window :after #'my-apply-group-after-ranger-open))
+
+
+  (with-eval-after-load 'treemacs
+    ;; 1. Variable to store the group context
+    (defvar my-treemacs-group-stash nil
+      "Stores the group of the window that was active before using Treemacs.")
+
+    ;; 2. Function: Stash the group from the 'Editor' window
+    (defun my-stash-group-from-treemacs-context (&rest _)
+      "Find the code window associated with Treemacs and save its group."
+      (let ((target-win (winum-get-window-by-number 1)))
+        (when (and target-win (window-live-p target-win))
+          (with-current-buffer (window-buffer target-win)
+            (setq my-treemacs-group-stash
+                  (or my-centaur-tabs-custom-group "Ungrouped"))
+            (message "Treemacs stash set to: %s" my-treemacs-group-stash)))))
+
+    ;; 3. Function: Apply the stashed group to the new file
+    (defun my-apply-group-on-treemacs-open (&rest _)
+      "Apply the stashed group to the newly opened buffer."
+      (message "XXX control entered stash apply func")
+      (when my-treemacs-group-stash
+        (setq my-centaur-tabs-custom-group my-treemacs-group-stash)
+        ;; Refresh tabs
+        (centaur-tabs-group-buffer-groups)
+        (centaur-tabs-display-update)
+        (message "Inherited group from Treemacs context: %s" my-treemacs-group-stash)))
+
+    ;; 4. Hook the 'Apply' logic to Treemacs' dedicated file-open hook
+    ;; This covers RET, mouse clicks, and splits automatically.
+    (advice-add 'treemacs-visit-node-default :after #'my-apply-group-on-treemacs-open)
+    (advice-add 'treemacs-visit-node-in-most-recently-used-window :after #'my-apply-group-on-treemacs-open)
+    (advice-add 'treemacs-visit-node-ace :after #'my-apply-group-on-treemacs-open)
+    (advice-add 'treemacs-visit-node-no-split :after #'my-apply-group-on-treemacs-open)
+    (advice-add 'treemacs-visit-node-vertical-split :after #'my-apply-group-on-treemacs-open)
+    (advice-add 'treemacs-visit-node-close-treemacs :after #'my-apply-group-on-treemacs-open)
+    (advice-add 'treemacs-visit-node-horizontal-split :after #'my-apply-group-on-treemacs-open)
+    (advice-add 'treemacs-visit-node-ace-vertical-split :after #'my-apply-group-on-treemacs-open)
+    (advice-add 'treemacs-visit-node-ace-horizontal-split :after #'my-apply-group-on-treemacs-open)
+    (advice-add 'treemacs-visit-node-in-most-recently-used-window :after #'my-apply-group-on-treemacs-open)
+
+    (advice-add 'treemacs-visit-node-default :before #'my-stash-group-from-treemacs-context)
+    (advice-add 'treemacs-visit-node-in-most-recently-used-window :before #'my-stash-group-from-treemacs-context)
+    (advice-add 'treemacs-visit-node-in-ace :before #'my-stash-group-from-treemacs-context)
+    (advice-add 'treemacs-visit-node-no-split :before #'my-stash-group-from-treemacs-context)
+    (advice-add 'treemacs-visit-node-vertical-split :before #'my-stash-group-from-treemacs-context)
+    (advice-add 'treemacs-visit-node-close-treemacs :before #'my-stash-group-from-treemacs-context)
+    (advice-add 'treemacs-visit-node-horizontal-split :before #'my-stash-group-from-treemacs-context)
+    (advice-add 'treemacs-visit-node-ace-vertical-split :before #'my-stash-group-from-treemacs-context)
+    (advice-add 'treemacs-visit-node-ace-horizontal-split :before #'my-stash-group-from-treemacs-context)
+    (advice-add 'treemacs-visit-node-in-most-recently-used-window :before #'my-stash-group-from-treemacs-context))
+
+  ;; ---------------------------------------------------------------------------
+  ;; Custom Per-Window Point Memory (Fixes point synchronization across windows)
+  ;; ---------------------------------------------------------------------------
+
+  (defun my-save-window-point-constantly ()
+    "Silently record the point of the current buffer into the window's memory."
+    (when-let* ((win (selected-window))
+                ((window-live-p win)))
+      (let* ((hash (or (window-parameter win 'my-buffer-points)
+                       (let ((h (make-hash-table :test 'equal)))
+                         (set-window-parameter win 'my-buffer-points h)
+                         h)))
+             (buf-name (buffer-name (window-buffer win)))
+             (curr-point (window-point win)))
+        ;; Only update the hash table if the point actually changed
+        (unless (equal (gethash buf-name hash) curr-point)
+          (puthash buf-name curr-point hash)))))
+
+  ;; Track the point after every command (a very lightweight operation)
+  (add-hook 'post-command-hook #'my-save-window-point-constantly)
+
+  (defun my-restore-point-after-tab-switch (orig-fun &rest args)
+    "Advice to force-restore the point after switching tabs via centaur-tabs."
+    (let ((win (selected-window)))
+      (apply orig-fun args)
+      (let* ((hash (window-parameter win 'my-buffer-points))
+             (buf (window-buffer win))
+             (saved-point (and hash (gethash (buffer-name buf) hash))))
+        (when saved-point
+          (with-current-buffer buf
+            ;; Ensure the saved point doesn't exceed current buffer boundaries
+            (set-window-point win (max (point-min) (min (point-max) saved-point))))))))
+
+  ;; Apply the restoration advice to the relevant centaur-tabs navigation commands
+  (dolist (cmd '(centaur-tabs-forward
+                 centaur-tabs-backward
+                 centaur-tabs-forward-group
+                 centaur-tabs-backward-group
+                 centaur-tabs-switch-group
+                 centaur-tabs-ace-jump
+                 centaur-tabs-select-tab))
+    (advice-add cmd :around #'my-restore-point-after-tab-switch))
 
   ;; SPC o t l: Next tab
   ;; SPC o t h: Previous tab
@@ -711,7 +933,8 @@ before packages are loaded."
     "otd" (lambda()
             (interactive)
             (centaur-tabs-ace-jump 16))
-    "otG" 'my-centaur-tabs-assign-group)
+    "otG" 'my-centaur-tabs-assign-group
+    "otN" 'my-centaur-tabs-new-tab-same-group)
 
   (spacemacs/declare-prefix "otl" "next tab")
   (spacemacs/declare-prefix "oth" "previous tab")
@@ -724,9 +947,36 @@ before packages are loaded."
   (spacemacs/declare-prefix "ots" "select tab and swap")
   (spacemacs/declare-prefix "otd" "select tab and delete")
   (spacemacs/declare-prefix "otG" "assign tab to group")
+  (spacemacs/declare-prefix "otN" "create new tab in group")
 
-  ;; TODO: I'd like to be able to see the current tab group name somewhere
-  ;;(centaur-tabs-get-group-name (current-buffer)
+  ;; Mnemonics to save current layout and desktop, then quit
+  ;; SPC o p s: Quicksave current perspective to "latest"
+  ;; SPC o p l: Quickload current perspective to "latest"
+  ;;
+  ;; NOTE: For this to work, my-centaur-tabs-custom-group must be added to desktop-locals-to-save in customize menu for desktop.el
+  (spacemacs/declare-prefix "op" "perspectives")
+  (spacemacs/set-leader-keys
+    "ops" (lambda ()
+            (interactive)
+            (persp-save-state-to-file "~/.emacs.d/.cache/persp/latest/layout")
+            (desktop-save "~/.emacs.d/.cache/persp/latest"))
+    "opl" (lambda ()
+            (interactive)
+            (persp-load-state-from-file "~/.emacs.d/.cache/persp/latest/layout")
+            (desktop-read "~/.emacs.d/.cache/persp/latest"))
+    "opS" (lambda (persp-name)
+            (interactive "sSave perspectives as: ")
+            (persp-save-state-to-file (format "~/.emacs.d/.cache/persp/%s/layout" (or persp-name "latest")))
+            (desktop-save (format "~/.emacs.d/.cache/persp/%s" (or persp-name "latest"))))
+    "opL" (lambda (persp-name)
+            (interactive "sLoad perspective name: ")
+            (persp-load-state-from-file (format "~/.emacs.d/.cache/persp/%s/layout" (or persp-name "latest")))
+            (desktop-read (format "~/.emacs.d/.cache/persp/%s" (or persp-name "latest")))))
+
+  (spacemacs/declare-prefix "ops" "Quicksave perspectives")
+  (spacemacs/declare-prefix "opl" "Quickload perspectives")
+  (spacemacs/declare-prefix "opS" "Save perspectives as")
+  (spacemacs/declare-prefix "opL" "Load perspectives")
 
   ;; Disable package GPG key checking
   (setq package-check-signature nil)
@@ -738,8 +988,41 @@ before packages are loaded."
   ;; Used to save compilation command and other project(ile)-specific stuff
   (setq enable-dir-local-variables t)
 
-  ;; Skip past info and errors in compilation
+  ;; Set tab width to 4 spaces
+  (setq-default tab-width 4)
+
+  ;; Set whitespace checker long line length to 100 characters
+  (setq-default whitespace-line-column 100)
+
+  ;; Set compilation ignore threshold to 2 (scroll past info and warnings)
   (setq-default compilation-skip-threshold 2)
+
+  ;; Extend org mode todo keywords to include more states for local task tracking
+  (setq-default org-todo-keywords
+                '((sequence "TODO(t)"
+                            "NEXT(n)"
+                            "IN_PROGRESS(p!)"
+                            "IN_REVIEW(r!)"
+                            "|"
+                            "DONE(d!)")
+                  (sequence "BLOCKED(b@)")
+                  (sequence "|"
+                            "CANCELLED(c@)")
+                  (sequence "LATER(l@)")
+                  (seqeunce "MAYBE(m@)")))
+
+  ;; Set corresponding faces for each of the items above
+  (setq-default org-todo-keyword-faces
+                '(("TODO". org-todo)
+                  ("NEXT" . org-warning)
+                  ("IN_PROGRESS" . org-cite)
+                  ("IN_REVIEW" . org-agenda-current-time)
+                  ("DONE" . org-done)
+                  ("BLOCKED" . org-habit-overdue-face)
+                  ("CANCELLED" . markdown-strike-through-face)
+                  ("LATER" . org-document-title)
+                  ("MAYBE" . org-dispatcher-highlight)
+                  ))
 
   ;; Disable C-h == help instead of delete in insert mode
   (global-set-key (kbd "C-h") 'backward-delete-char)
@@ -751,15 +1034,18 @@ before packages are loaded."
   (add-hook 'yas-minor-mode-hook (lambda ()
                                    (yas-activate-extra-mode 'fundamental-mode)))
 
+  (setq desktop-save-mode 1)
+  (add-hook 'c-mode-common-hook (lambda ()
+                                  (c-set-style "user")))
+
+  ;; Preserve window point when switching buffers per-window
+  (setq-default switch-to-buffer-preserve-window-point t)
+
   ;; Add configuration for Gemini
   (setq gptel-model 'gemini-pro-latest
         gptel-backend (gptel-make-gemini "Gemini Pro"
                         :key "YOURKEYHERE"
-                        :stream t))
-
-  ;; Set centaur tab cycle scope to visible tabs only
-  (setq centaur-tabs-cycle-scope 'tabs)
-  )
+                        :stream t)))
 
 
 ;; Do not write anything past this comment. This is where Emacs will
@@ -775,6 +1061,15 @@ This function is called at the very end of Spacemacs initialization."
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
    '(compilation-skip-threshold 2)
+   '(desktop-locals-to-save
+     '(desktop-locals-to-save truncate-lines case-fold-search case-replace
+                              fill-column overwrite-mode change-log-default-name
+                              line-number-mode column-number-mode
+                              size-indication-mode buffer-file-coding-system
+                              buffer-display-time indent-tabs-mode tab-width
+                              indicate-buffer-boundaries indicate-empty-lines
+                              show-trailing-whitespace
+                              my-centaur-tabs-custom-group))
    '(magit-todos-keywords '("TODO" "FIXME" "XXX" "TEMP"))
    '(package-selected-packages
      '(ace-link afternoon-theme aggressive-indent alect-themes all-the-icons
@@ -818,7 +1113,7 @@ This function is called at the very end of Spacemacs initialization."
                 memoize minimal-theme modus-themes moe-theme molokai-theme
                 monochrome-theme monokai-theme multi-line multi-term multi-vterm
                 mustang-theme nameless naquadah-theme nerd-icons nhexl-mode
-                noctilux-theme nodejs-repl npm-mode obsidian-theme
+                noctilux-theme nodejs-repl npm-mode nyan-mode obsidian-theme
                 occidental-theme oldlace-theme omtose-phellack-themes
                 open-junk-file org-cliplink org-contrib org-download org-mime
                 org-pomodoro org-present org-projectile org-rich-yank
