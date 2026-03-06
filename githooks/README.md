@@ -2,11 +2,11 @@
 
 ## About
 
-This repo contains various helpful git hooks that can help hasten development under the FNC/1FINITY IP Repo workflow.
+This repo contains various helpful git hooks that can help hasten development
 
 ### Hooks
 
-* ``prepare-commit-msg``: Pre-fills commit message with Jira ID, derived from current branch. Expects branch name to be of the form ``<something>/PROJECTKEY-<digits>-optional-description``
+* ``commit-msg``: Post-fills commit message with Jira ID, derived from current branch if possible. Expects branch name to be of the form ``<something>/PROJECTKEY-<digits>-optional-description``
 
 ### Configuration via ENV var
 
