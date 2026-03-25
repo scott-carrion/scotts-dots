@@ -18,8 +18,7 @@ cp debian_dotfiles/dottmux.conf ~/.tmux.conf
 cp -r debian_dotfiles/dotconfig/* ~/.config
 
 echo Now installing githooks
-cp -r githooks ~/githooks
-git config --global core.hooksPath ~/githooks
+make -C githooks
 
 echo Now installing fonts
 sudo cp -r fonts /usr/local/share
