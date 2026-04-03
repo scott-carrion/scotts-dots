@@ -689,6 +689,10 @@ before packages are loaded."
   (spacemacs/set-leader-keys "oT" 'spacemacs/shell-pop-vterm)
   (spacemacs/declare-prefix "oT" "pop-terminal")
 
+  ;; SPC o x: Activate whitespace-mode
+  (spacemacs/set-leader-keys "ow" 'whitespace-mode)
+  (spacemacs/declare-prefix "ow" "whitespace mode")
+
   ;; SPC o x: Activate hexl-mode
   (spacemacs/set-leader-keys "ox" 'hexl-mode)
   (spacemacs/declare-prefix "ox" "hex mode")
