@@ -554,7 +554,7 @@ It should only modify the values of Spacemacs settings."
    ;; indent handling like has been reported for `go-mode'.
    ;; If it does deactivate it here.
    ;; (default t)
-   dotspacemacs-use-clean-aindent-mode t
+   dotspacemacs-use-clean-aindent-mode nil
 
    ;; Accept SPC as y for prompts if non-nil. (default nil)
    dotspacemacs-use-SPC-as-y nil
@@ -600,10 +600,9 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
 
   (with-eval-after-load 'spaceline
     (spaceline-define-segment current-centaur-tab-group
-      "Custom segment that shows the current tab group, given by my-centaur-tabs-custom-group"
-      ;; We could just return the variable, but this is left for possible future customization
-      (when my-centaur-tabs-custom-group
-        (format "%s" my-centaur-tabs-custom-group)))
+      "Custom segment that shows the current tab group, given by my-centaur-tabs-custom-groups-alist"
+      (let ((group (my-centaur-tabs-get-current-group)))
+        (when group (format "%s" group))))
 
     (defun spaceline-custom-theme (&rest additional-segments)
       "My custom spaceline theme."
@@ -733,9 +732,22 @@ before packages are loaded."
   (spacemacs/declare-prefix "ohu" "clear-regexp")
   (spacemacs/declare-prefix "ohC" "clear-all")
 
-  ;; buffer-local var that associates a buffer with a tab group
-  (defvar-local my-centaur-tabs-custom-group nil
-    "The custom tab group name assigned to this buffer.")
+  (defvar-local my-centaur-tabs-custom-groups-alist nil
+    "Alist mapping layout (perspective) names to the custom tab group assigned to this buffer.")
+
+  (defun my-centaur-tabs-get-current-group ()
+    "Get the custom group for the current buffer in the active layout."
+    (let ((layout (if (fboundp 'get-current-persp)
+                      (safe-persp-name (get-current-persp))
+                    "Default")))
+      (cdr (assoc layout my-centaur-tabs-custom-groups-alist))))
+
+  (defun my-centaur-tabs-set-current-group (group-name)
+    "Set the custom group for the current buffer in the active layout."
+    (let ((layout (if (fboundp 'get-current-persp)
+                      (safe-persp-name (get-current-persp))
+                    "Default")))
+      (setf (alist-get layout my-centaur-tabs-custom-groups-alist nil nil 'equal) group-name)))
 
   ;; Set centaur tab cycle scope to visible tabs only
   (setq centaur-tabs-cycle-scope 'tabs)
@@ -766,30 +778,32 @@ before packages are loaded."
 
   (with-eval-after-load 'centaur-tabs
     (defun centaur-tabs-buffer-groups ()
-      "SCC custom buffer/tab group rules for manual assignment. Return the custom group if set, otherwise return 'Ungrouped'."
-      (list (cond (my-centaur-tabs-custom-group my-centaur-tabs-custom-group)
-                  ((string-equal "*" (substring (buffer-name) 0 1)) "_Emacs")
-                  ((string-prefix-p "magit" (buffer-name)) "_Emacs")
-                  (t "Ungrouped"))))
+      "SCC custom buffer/tab group rules for manual assignment.
+      Return the custom group if set for the current layout, otherwise return 'Ungrouped'."
+      (let ((custom-group (my-centaur-tabs-get-current-group)))
+        (list (cond (custom-group custom-group)
+                    ((string-equal "*" (substring (buffer-name) 0 1)) "_Emacs")
+                    ((string-prefix-p "magit" (buffer-name)) "_Emacs")
+                    (t "Ungrouped")))))
 
     ;; This will regroup the tab bar
     (centaur-tabs-group-buffer-groups)
 
     ;; Helper function that sets the tab group
     (defun my-centaur-tabs-assign-group (group-name)
-      "Manually assign the current buffer to a specific centaur-tabs group."
+      "Manually assign the current buffer to a specific centaur-tabs group in the current layout."
       (interactive "sEnter group name: ")
-      (setq my-centaur-tabs-custom-group (if (string-blank-p group-name) nil group-name))
-      (centaur-tabs-group-buffer-groups)
-      (centaur-tabs-display-update)
-      (message "Buffer assigned to group: %s" (or my-centaur-tabs-custom-group "Ungrouped")))
+      (let ((group (if (string-blank-p group-name) nil group-name)))
+        (my-centaur-tabs-set-current-group group)
+        (centaur-tabs-group-buffer-groups)
+        (message "Buffer assigned to group: %s" (or group "Ungrouped"))))
 
     (defun my-centaur-tabs-new-tab-same-group ()
       "Open a new tab in the same group as the current buffer"
       (interactive)
-      (let ((current-group (or my-centaur-tabs-custom-group "Ungrouped")))
+      (let ((current-group (or (my-centaur-tabs-get-current-group) "Ungrouped")))
         (centaur-tabs--create-new-tab)
-        (if (not (null current-group)) (setq my-centaur-tabs-custom-group current-group)))))
+        (if (not (null current-group)) (my-centaur-tabs-set-current-group current-group)))))
 
   ;; Tweaks to stash and pop the current tab group so that ranger/deer open files in the active tab group
   (with-eval-after-load 'ranger
@@ -798,7 +812,7 @@ before packages are loaded."
 
     (defun my-stash-group-before-ranger (&rest _)
       "Save the current buffer's group to the stash."
-      (setq my-ranger-group-stash (or my-centaur-tabs-custom-group "Ungrouped"))
+      (setq my-ranger-group-stash (or (my-centaur-tabs-get-current-group) "Ungrouped"))
       (message "Ranger stash set to: %s" my-ranger-group-stash))
 
     (advice-add 'ranger :before #'my-stash-group-before-ranger)
@@ -807,7 +821,8 @@ before packages are loaded."
     (defun my-apply-group-after-ranger-open (&rest _)
       "Apply the stashed group to the newly opened buffer."
       (when my-ranger-group-stash
-        (setq my-centaur-tabs-custom-group my-ranger-group-stash)
+        (my-centaur-tabs-set-current-group my-ranger-group-stash)
+
         ;; Refresh tabs so the change is visible immediately
         (centaur-tabs-group-buffer-groups)
         (centaur-tabs-display-update)
@@ -829,14 +844,15 @@ before packages are loaded."
         (when (and target-win (window-live-p target-win))
           (with-current-buffer (window-buffer target-win)
             (setq my-treemacs-group-stash
-                  (or my-centaur-tabs-custom-group "Ungrouped"))
+                  (or (my-centaur-tabs-get-current-group) "Ungrouped"))
             (message "Treemacs stash set to: %s" my-treemacs-group-stash)))))
 
     ;; 3. Function: Apply the stashed group to the new file
     (defun my-apply-group-on-treemacs-open (&rest _)
       "Apply the stashed group to the newly opened buffer."
       (when my-treemacs-group-stash
-        (setq my-centaur-tabs-custom-group my-treemacs-group-stash)
+        (my-centaur-tabs-set-current-group my-treemacs-group-stash)
+
         ;; Refresh tabs
         (centaur-tabs-group-buffer-groups)
         (centaur-tabs-display-update)
@@ -953,7 +969,7 @@ before packages are loaded."
   ;; SPC o p s: Quicksave current perspective to "latest"
   ;; SPC o p l: Quickload current perspective to "latest"
   ;;
-  ;; NOTE: For this to work, my-centaur-tabs-custom-group must be added to desktop-locals-to-save in customize menu for desktop.el
+  ;; NOTE: For this to work, my-centaur-tabs-custom-groups-alist must be added to desktop-locals-to-save in customize menu for desktop.el
   (spacemacs/declare-prefix "op" "perspectives")
   (spacemacs/set-leader-keys
     "ops" (lambda ()
@@ -1069,7 +1085,8 @@ This function is called at the very end of Spacemacs initialization."
                               buffer-display-time indent-tabs-mode tab-width
                               indicate-buffer-boundaries indicate-empty-lines
                               show-trailing-whitespace
-                              my-centaur-tabs-custom-group))
+                              my-centaur-tabs-custom-group
+                              my-centaur-tabs-custom-groups-alist))
    '(magit-todos-keywords '("TODO" "FIXME" "XXX" "TEMP"))
    '(package-selected-packages
      '(ace-link afternoon-theme aggressive-indent alect-themes all-the-icons
