@@ -598,6 +598,14 @@ configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
 
+  (with-eval-after-load 'vterm
+    ;; Force Evil mode to pass the keys directly to vterm across all input states
+    (evil-define-key '(insert hybrid emacs normal) vterm-mode-map
+      (kbd "C-c") #'(lambda () (interactive) (vterm-send-key "c" nil nil t))
+      (kbd "C-h") #'(lambda () (interactive) (vterm-send-key "h" nil nil t))
+      (kbd "C-u") #'(lambda () (interactive) (vterm-send-key "u" nil nil t))
+      (kbd "C-y") #'(lambda () (interactive) (vterm-send-key "y" nil nil t))))
+
   (with-eval-after-load 'spaceline
     (spaceline-define-segment current-centaur-tab-group
       "Custom segment that shows the current tab group, given by my-centaur-tabs-custom-groups-alist"
