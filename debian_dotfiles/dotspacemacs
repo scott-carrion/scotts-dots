@@ -71,7 +71,8 @@ This function should only modify configuration layer settings."
    ;; `:location' property: '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
    dotspacemacs-additional-packages '(yasnippet-snippets
-                                      nyan-mode)
+                                      nyan-mode
+                                      catppuccin-theme)
 
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -216,7 +217,8 @@ It should only modify the values of Spacemacs settings."
    ;; package can be defined with `:package', or a theme can be defined with
    ;; `:location' to download the theme package, refer the themes section in
    ;; DOCUMENTATION.org for the full theme specifications.
-   dotspacemacs-themes '(doom-Iosvkem
+   dotspacemacs-themes '(catppuccin
+                         doom-Iosvkem
                          moe-dark
                          gotham
                          planet
@@ -1101,6 +1103,9 @@ before packages are loaded."
 
   ;; Preserve window point when switching buffers per-window
   (setq-default switch-to-buffer-preserve-window-point t)
+
+  ;; Set catpuccin theme flavor. Options: frappe, latte, macchiato, or mocha
+  (setq catppuccin-flavor 'macchiato)
 
   ;; Add configuration for Gemini
   (setq gptel-model 'gemini-pro-latest
