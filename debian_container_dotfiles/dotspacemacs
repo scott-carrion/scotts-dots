@@ -33,6 +33,7 @@ This function should only modify configuration layer settings."
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
    '(yaml
+     pdf
      systemd
      csv
      python
@@ -71,7 +72,8 @@ This function should only modify configuration layer settings."
    ;; `:location' property: '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
    dotspacemacs-additional-packages '(yasnippet-snippets
-                                      nyan-mode)
+                                      nyan-mode
+                                      catppuccin-theme)
 
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -216,7 +218,8 @@ It should only modify the values of Spacemacs settings."
    ;; package can be defined with `:package', or a theme can be defined with
    ;; `:location' to download the theme package, refer the themes section in
    ;; DOCUMENTATION.org for the full theme specifications.
-   dotspacemacs-themes '(doom-Iosvkem
+   dotspacemacs-themes '(catppuccin
+                         doom-Iosvkem
                          moe-dark
                          gotham
                          planet
@@ -597,6 +600,29 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
+
+  ;; This is a fix for "Invalid image specification" error when doing things like zoom and Isearch
+  ;; when using PDF tools. See https://github.com/vedang/pdf-tools/issues/339"
+  ;; This block is intentionally not wrapped in "with-eval-after-load" block.
+  (defun +fix-pdf-view-image-size (&optional displayed-p window page)
+    "Return the size in pixel of the current image in WINDOW.
+       If DISPLAYED-P is non-nil, return the size of the displayed
+       image.  These values may be different, if slicing is used.
+       If PAGE is non-nil return its size instead of current page."
+    (let ((display-prop (if pdf-view-roll-minor-mode
+                            (progn (setq window (if (windowp window) window (selected-window)))
+                                   (setq page (or page (pdf-view-current-page window)))
+                                   (unless (memq page (image-mode-window-get 'displayed-pages window))
+                                     (pdf-view-display-page page window))
+                                   (overlay-get (pdf-roll-page-overlay page window) 'display))
+                          (image-get-display-property))))
+      (if (eq (car display-prop) 'image)
+          (image-size display-prop t)
+        (if displayed-p
+            (image-display-size display-prop t)
+          (image-size (nth 1 display-prop) t)))))
+  (advice-add 'pdf-view-image-size :override #'+fix-pdf-view-image-size)
+  (add-hook 'pdf-view-mode-hook #'pdf-view-themed-minor-mode)
 
   (with-eval-after-load 'vterm
     ;; Force Evil mode to pass the keys directly to vterm across all input states
@@ -1102,6 +1128,9 @@ before packages are loaded."
   ;; Preserve window point when switching buffers per-window
   (setq-default switch-to-buffer-preserve-window-point t)
 
+  ;; Set catppuccin theme flavor. Options: frappe, latte, macchiato, or mocha
+  (setq catppuccin-flavor 'macchiato)
+
   ;; Add configuration for Gemini
   (setq gptel-model 'gemini-pro-latest
         gptel-backend (gptel-make-gemini "Gemini Pro"
@@ -1138,9 +1167,9 @@ This function is called at the very end of Spacemacs initialization."
                 ample-theme ample-zen-theme anaconda-mode anti-zenburn-theme
                 apropospriate-theme auto-compile auto-highlight-symbol
                 avy-jump-helm-line badwolf-theme birds-of-paradise-plus-theme
-                bubbleberry-theme busybee-theme centaur-tabs centered-cursor-mode
-                cherry-blossom-theme chocolate-theme clean-aindent-mode
-                clues-theme cmake-mode code-cells code-review
+                bubbleberry-theme busybee-theme catppuccin-theme centaur-tabs
+                centered-cursor-mode cherry-blossom-theme chocolate-theme
+                clean-aindent-mode clues-theme cmake-mode code-cells code-review
                 color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow
                 column-enforce-mode company copy-as-format cpp-auto-include
                 csv-mode cyberpunk-theme cython-mode dakrone-theme darkmine-theme
@@ -1180,12 +1209,12 @@ This function is called at the very end of Spacemacs initialization."
                 open-junk-file org-cliplink org-contrib org-download org-mime
                 org-pomodoro org-present org-projectile org-rich-yank
                 org-superstar organic-green-theme orgit-forge overseer
-                page-break-lines paradox password-generator pcre2el
-                phoenix-dark-mono-theme phoenix-dark-pink-theme pip-requirements
-                pipenv pippel planet-theme plz plz-event-source plz-media-type
-                poetry popwin prettier-js professional-theme purple-haze-theme
-                py-isort pydoc pyenv-mode pylookup python-pytest quickrun
-                railscasts-theme rainbow-delimiters ranger rebecca-theme
+                page-break-lines paradox password-generator pcre2el pdf-tools
+                pdf-view-restore phoenix-dark-mono-theme phoenix-dark-pink-theme
+                pip-requirements pipenv pippel planet-theme plz plz-event-source
+                plz-media-type poetry popwin prettier-js professional-theme
+                purple-haze-theme py-isort pydoc pyenv-mode pylookup python-pytest
+                quickrun railscasts-theme rainbow-delimiters ranger rebecca-theme
                 restart-emacs reverse-theme seti-theme shell-pop smeargle
                 smyx-theme soft-charcoal-theme soft-morning-theme soft-stone-theme
                 solarized-theme soothe-theme space-doc spacegray-theme spaceline
