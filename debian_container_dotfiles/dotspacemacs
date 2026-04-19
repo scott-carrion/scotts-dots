@@ -33,6 +33,11 @@ This function should only modify configuration layer settings."
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
    '(yaml
+     ;; Notes for usage: After installing "texlive-full", "pdftex" and similar, build with "SPC m b"
+     ;; and manually open the output PDF in another window, which will auto-update
+     ;;(latex :variables latex-view-pdf-in-split-window t
+     ;;       latex-view-with-pdf-tools t
+     ;;       latex-refresh-preview t)
      pdf
      systemd
      csv
