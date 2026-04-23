@@ -1041,6 +1041,16 @@ before packages are loaded."
   (spacemacs/declare-prefix "otG" "assign tab to group")
   (spacemacs/declare-prefix "otN" "create new tab in group")
 
+  ;; Helper function to dynamically list existing saved perspectives
+  (defun my-get-saved-perspectives ()
+    "Return a list of saved perspective directories from the cache."
+    (let ((persp-dir (expand-file-name "~/.emacs.d/.cache/persp/")))
+      (if (file-directory-p persp-dir)
+          (seq-filter (lambda (f)
+                        (file-directory-p (expand-file-name f persp-dir)))
+                      (directory-files persp-dir nil "^[^.]")) ; Exclude hidden/. /..
+        '())))
+
   ;; Mnemonics to save current layout and desktop, then quit
   ;; SPC o p s: Quicksave current perspective to "latest"
   ;; SPC o p l: Quickload current perspective to "latest"
@@ -1056,14 +1066,27 @@ before packages are loaded."
             (interactive)
             (persp-load-state-from-file "~/.emacs.d/.cache/persp/latest/layout")
             (desktop-read "~/.emacs.d/.cache/persp/latest"))
-    "opS" (lambda (persp-name)
-            (interactive "sSave perspectives as: ")
-            (persp-save-state-to-file (format "~/.emacs.d/.cache/persp/%s/layout" (or persp-name "latest")))
-            (desktop-save (format "~/.emacs.d/.cache/persp/%s" (or persp-name "latest"))))
-    "opL" (lambda (persp-name)
-            (interactive "sLoad perspective name: ")
-            (persp-load-state-from-file (format "~/.emacs.d/.cache/persp/%s/layout" (or persp-name "latest")))
-            (desktop-read (format "~/.emacs.d/.cache/persp/%s" (or persp-name "latest")))))
+    "opS" (lambda ()
+            (interactive)
+            (let* ((persp-name (helm-comp-read "Save perspectives as: "
+                                               (my-get-saved-perspectives)
+                                               :must-match nil
+                                               :name "Perspectives"))
+                   (safe-name (if (string-blank-p persp-name) "latest" persp-name)))
+              (persp-save-state-to-file (format "~/.emacs.d/.cache/persp/%s/layout" safe-name))
+              (desktop-save (format "~/.emacs.d/.cache/persp/%s" safe-name))))
+    "opL" (lambda ()
+            (interactive)
+            (let* ((saved-persps (my-get-saved-perspectives)))
+              (if (null saved-persps)
+                  (message "No saved perspectives found in ~/.emacs.d/.cache/persp/")
+                (let ((persp-name (helm-comp-read "Load perspective name: "
+                                                  saved-persps
+                                                  :must-match t
+                                                  :name "Perspectives")))
+                  (when (and persp-name (not (string-blank-p persp-name)))
+                    (persp-load-state-from-file (format "~/.emacs.d/.cache/persp/%s/layout" persp-name))
+                    (desktop-read (format "~/.emacs.d/.cache/persp/%s" persp-name))))))))
 
   (spacemacs/declare-prefix "ops" "Quicksave perspectives")
   (spacemacs/declare-prefix "opl" "Quickload perspectives")
