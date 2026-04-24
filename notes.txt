@@ -13,3 +13,15 @@ ranger
 Windows:
 flameshot 12.x (13.x is broken on win11)
 WSL (debian)
+
+Font issues:
+
+In ~/.config/powerline/themes/powerline_bfc.json, see "powerline.segments.common.env.user"
+In kitty.conf, make sure that the symbol_map option is set to "Iosevka Term"
+Use GNOME app gucharmap to see unicode character map
+The "Unknown" section has the icons
+kitty doesn't like the codepoints for some reason, not sure why
+
+Useful codepoints:
+\uf61a: Cat
+\uf5a8: Black mesa
