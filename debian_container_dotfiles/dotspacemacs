@@ -78,7 +78,8 @@ This function should only modify configuration layer settings."
    ;; Also include the dependencies as they will not be resolved automatically.
    dotspacemacs-additional-packages '(yasnippet-snippets
                                       nyan-mode
-                                      catppuccin-theme)
+                                      catppuccin-theme
+                                      sidecar-locals)
 
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -1102,6 +1103,18 @@ before packages are loaded."
   ;; Enable local values set in .dir-locals.el
   ;; Used to save compilation command and other project(ile)-specific stuff
   (setq enable-dir-local-variables t)
+
+  ;; Enable sidecar-locals global mode, and set the search paths.
+  ;; E.g. if you have code in "~/Documents/code/repo", add "~/Documents/code/*"
+  ;; to sidecar-locals-paths-allow, then "mkdir ~/Documents/code/repo/.sidecar-locals"
+  ;; Run function sidecar-locals-report with a file you want the locals to apply to
+  ;; open. It will print a list of files which would be used if found. You should
+  ;; probably do something like (setq projectile-project-compilation-cmd "whatever")
+  ;; in "~/Documents/code/repo/.sidecar-locals/().el". Then reload the buffer and
+  ;; the vars should be applied!
+  (sidecar-locals-mode)
+  ;;(setq sidecar-locals-paths-allow
+  ;;      (list "~/Documents/code/*"))
 
   ;; Set tab width to 4 spaces
   (setq-default tab-width 4)
