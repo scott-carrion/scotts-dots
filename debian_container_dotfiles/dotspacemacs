@@ -638,11 +638,44 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
       (kbd "C-u") #'(lambda () (interactive) (vterm-send-key "u" nil nil t))
       (kbd "C-y") #'(lambda () (interactive) (vterm-send-key "y" nil nil t))))
 
+  (defun scc-format-project-name (input-string)
+    "Format INPUT-STRING to show only the base folder if it's a project path.
+If INPUT-STRING is \"Project: /path/to/folder\", return \"Project: folder\".
+Otherwise, return INPUT-STRING unaltered."
+    ;; Protect global match data, which is best practice when using regex in Elisp
+    (save-match-data
+      (if (string-match "^Project: \\(.*\\)$" input-string)
+          (let* ((path (match-string 1 input-string))
+                 ;; directory-file-name strips trailing slashes if they exist
+                 ;; file-name-nondirectory grabs just the final folder name
+                 (folder (file-name-nondirectory (directory-file-name path))))
+            (format "[P] %s" folder))
+        ;; If the regex doesn't match, return the original string
+        input-string)))
+
+  (defun scc-helm-centaur-tabs-switch-group ()
+    "Use Helm to choose and switch to an active Centaur Tabs group."
+    (interactive)
+    (unless (bound-and-true-p centaur-tabs-mode)
+      (error "centaur-tabs-mode is not currently active"))
+
+    (let ((groups (centaur-tabs-get-groups)))
+      (if (not groups)
+          (message "No Centaur Tab groups are currently available.")
+        (helm :prompt "Switch to tab group: "
+              :sources (helm-build-sync-source "Centaur Tab Groups"
+                         :candidates groups
+                         :action (lambda (selected-group)
+                                   (centaur-tabs-switch-group selected-group)))
+              :buffer "*helm centaur-tabs groups*"))))
+
   (with-eval-after-load 'spaceline
     (spaceline-define-segment current-centaur-tab-group
-      "Custom segment that shows the current tab group, given by my-centaur-tabs-custom-groups-alist"
-      (let ((group (my-centaur-tabs-get-current-group)))
-        (when group (format "%s" group))))
+      "Display the current centaur-tabs group name."
+      (when (bound-and-true-p centaur-tabs-mode)
+        (let ((groups (centaur-tabs-buffer-groups)))
+          (when groups
+            (format "%s" (scc-format-project-name (car groups)))))))
 
     (defun spaceline-custom-theme (&rest additional-segments)
       "My custom spaceline theme."
@@ -776,23 +809,6 @@ before packages are loaded."
   (spacemacs/declare-prefix "ohu" "clear-regexp")
   (spacemacs/declare-prefix "ohC" "clear-all")
 
-  (defvar-local my-centaur-tabs-custom-groups-alist nil
-    "Alist mapping layout (perspective) names to the custom tab group assigned to this buffer.")
-
-  (defun my-centaur-tabs-get-current-group ()
-    "Get the custom group for the current buffer in the active layout."
-    (let ((layout (if (fboundp 'get-current-persp)
-                      (safe-persp-name (get-current-persp))
-                    "Default")))
-      (cdr (assoc layout my-centaur-tabs-custom-groups-alist))))
-
-  (defun my-centaur-tabs-set-current-group (group-name)
-    "Set the custom group for the current buffer in the active layout."
-    (let ((layout (if (fboundp 'get-current-persp)
-                      (safe-persp-name (get-current-persp))
-                    "Default")))
-      (setf (alist-get layout my-centaur-tabs-custom-groups-alist nil nil 'equal) group-name)))
-
   ;; Set centaur tab cycle scope to visible tabs only
   (setq centaur-tabs-cycle-scope 'tabs)
 
@@ -820,144 +836,9 @@ before packages are loaded."
                                          "*"
                                          "*temp"))
 
-  (with-eval-after-load 'centaur-tabs
-    (defun centaur-tabs-buffer-groups ()
-      "SCC custom buffer/tab group rules for manual assignment.
-      Return the custom group if set for the current layout, otherwise return 'Ungrouped'."
-      (let ((custom-group (my-centaur-tabs-get-current-group)))
-        (list (cond (custom-group custom-group)
-                    ((string-equal "*" (substring (buffer-name) 0 1)) "_Emacs")
-                    ((string-prefix-p "magit" (buffer-name)) "_Emacs")
-                    (t "Ungrouped")))))
-
-    ;; This will regroup the tab bar
-    (centaur-tabs-group-buffer-groups)
-
-    ;; Helper function to gather existing groups
-    (defun my-centaur-tabs-get-all-groups-in-layout ()
-      "Retrieve a list of all custom centaur-tab groups currently used in the active layout."
-      (let ((groups '()))
-        (dolist (buf (buffer-list))
-          (let ((g (with-current-buffer buf (my-centaur-tabs-get-current-group))))
-            (when (and g (not (member g groups)))
-              (push g groups))))
-        groups))
-
-    ;; Helper function that sets the tab group
-    (defun my-centaur-tabs-assign-group (group-name)
-      "Manually assign the current buffer to a specific centaur-tabs group in the current layout."
-      (interactive
-       (let ((existing-groups (my-centaur-tabs-get-all-groups-in-layout)))
-         (list (helm-comp-read "Tab group name to set: " existing-groups
-                               :must-match nil
-                               :name "Tab Groups"))))
-      (let ((group (if (string-blank-p group-name) nil group-name)))
-        (my-centaur-tabs-set-current-group group)
-        (centaur-tabs-group-buffer-groups)
-        (centaur-tabs-display-update)
-        (message "Buffer assigned to group: %s" (or group "Ungrouped"))))
-
-    (defun my-centaur-tabs-helm-switch-group ()
-      "Switch to a centaur-tabs group in the current layout using Helm."
-      (interactive)
-      (let* ((groups (my-centaur-tabs-get-all-groups-in-layout))
-             (selected-group (helm-comp-read "Switch to tab group: " groups
-                                             :must-match t
-                                             :name "Tab Groups")))
-        (when selected-group
-          ;; Find the first buffer in the current layout's memory that belongs to the group
-          (let ((target-buffer (catch 'found
-                                 (dolist (buf (persp-buffer-list))
-                                   (when (equal (with-current-buffer buf (my-centaur-tabs-get-current-group))
-                                                selected-group)
-                                     (throw 'found buf))))))
-            (if target-buffer
-                (switch-to-buffer target-buffer)
-              (message "No active buffers found in group: %s" selected-group))))))
-
-    (defun my-centaur-tabs-new-tab-same-group ()
-      "Open a new tab in the same group as the current buffer"
-      (interactive)
-      (let ((current-group (or (my-centaur-tabs-get-current-group) "Ungrouped")))
-        (centaur-tabs--create-new-tab)
-        (if (not (null current-group)) (my-centaur-tabs-set-current-group current-group)))))
-
-  ;; Tweaks to stash and pop the current tab group so that ranger/deer open files in the active tab group
-  (with-eval-after-load 'ranger
-    (defvar my-ranger-group-stash nil
-      "Stores the centaur-tabs group of the buffer where ranger was invoked.")
-
-    (defun my-stash-group-before-ranger (&rest _)
-      "Save the current buffer's group to the stash."
-      (setq my-ranger-group-stash (or (my-centaur-tabs-get-current-group) "Ungrouped"))
-      (message "Ranger stash set to: %s" my-ranger-group-stash))
-
-    (advice-add 'ranger :before #'my-stash-group-before-ranger)
-    (advice-add 'deer :before #'my-stash-group-before-ranger)
-
-    (defun my-apply-group-after-ranger-open (&rest _)
-      "Apply the stashed group to the newly opened buffer."
-      (when my-ranger-group-stash
-        (my-centaur-tabs-set-current-group my-ranger-group-stash)
-
-        ;; Refresh tabs so the change is visible immediately
-        (centaur-tabs-group-buffer-groups)
-        (centaur-tabs-display-update)
-        (message "Opened file in group: %s" my-ranger-group-stash)))
-
-    (advice-add 'ranger-find-file :after #'my-apply-group-after-ranger-open)
-    (advice-add 'ranger-find-file-other-window :after #'my-apply-group-after-ranger-open))
-
-
-  (with-eval-after-load 'treemacs
-    ;; 1. Variable to store the group context
-    (defvar my-treemacs-group-stash nil
-      "Stores the group of the window that was active before using Treemacs.")
-
-    ;; 2. Function: Stash the group from the 'Editor' window
-    (defun my-stash-group-from-treemacs-context (&rest _)
-      "Find the code window associated with Treemacs and save its group."
-      (let ((target-win (winum-get-window-by-number 1)))
-        (when (and target-win (window-live-p target-win))
-          (with-current-buffer (window-buffer target-win)
-            (setq my-treemacs-group-stash
-                  (or (my-centaur-tabs-get-current-group) "Ungrouped"))
-            (message "Treemacs stash set to: %s" my-treemacs-group-stash)))))
-
-    ;; 3. Function: Apply the stashed group to the new file
-    (defun my-apply-group-on-treemacs-open (&rest _)
-      "Apply the stashed group to the newly opened buffer."
-      (when my-treemacs-group-stash
-        (my-centaur-tabs-set-current-group my-treemacs-group-stash)
-
-        ;; Refresh tabs
-        (centaur-tabs-group-buffer-groups)
-        (centaur-tabs-display-update)
-        (message "Inherited group from Treemacs context: %s" my-treemacs-group-stash)))
-
-    ;; 4. Hook the 'Apply' logic to Treemacs' dedicated file-open hook
-    ;; This covers RET, mouse clicks, and splits automatically.
-    (advice-add 'treemacs-visit-node-default :after #'my-apply-group-on-treemacs-open)
-    (advice-add 'treemacs-visit-node-in-most-recently-used-window :after #'my-apply-group-on-treemacs-open)
-    (advice-add 'treemacs-visit-node-ace :after #'my-apply-group-on-treemacs-open)
-    (advice-add 'treemacs-visit-node-no-split :after #'my-apply-group-on-treemacs-open)
-    (advice-add 'treemacs-visit-node-vertical-split :after #'my-apply-group-on-treemacs-open)
-    (advice-add 'treemacs-visit-node-close-treemacs :after #'my-apply-group-on-treemacs-open)
-    (advice-add 'treemacs-visit-node-horizontal-split :after #'my-apply-group-on-treemacs-open)
-    (advice-add 'treemacs-visit-node-ace-vertical-split :after #'my-apply-group-on-treemacs-open)
-    (advice-add 'treemacs-visit-node-ace-horizontal-split :after #'my-apply-group-on-treemacs-open)
-    (advice-add 'treemacs-visit-node-in-most-recently-used-window :after #'my-apply-group-on-treemacs-open)
-
-    (advice-add 'treemacs-visit-node-default :before #'my-stash-group-from-treemacs-context)
-    (advice-add 'treemacs-visit-node-in-most-recently-used-window :before #'my-stash-group-from-treemacs-context)
-    (advice-add 'treemacs-visit-node-in-ace :before #'my-stash-group-from-treemacs-context)
-    (advice-add 'treemacs-visit-node-no-split :before #'my-stash-group-from-treemacs-context)
-    (advice-add 'treemacs-visit-node-vertical-split :before #'my-stash-group-from-treemacs-context)
-    (advice-add 'treemacs-visit-node-close-treemacs :before #'my-stash-group-from-treemacs-context)
-    (advice-add 'treemacs-visit-node-horizontal-split :before #'my-stash-group-from-treemacs-context)
-    (advice-add 'treemacs-visit-node-ace-vertical-split :before #'my-stash-group-from-treemacs-context)
-    (advice-add 'treemacs-visit-node-ace-horizontal-split :before #'my-stash-group-from-treemacs-context)
-    (advice-add 'treemacs-visit-node-in-most-recently-used-window :before #'my-stash-group-from-treemacs-context))
+  (centaur-tabs-enable-buffer-alphabetical-reordering)
+  (centaur-tabs-group-by-projectile-project)
+  (setq centaur-tabs-adjust-buffer-order t)
 
   ;; ---------------------------------------------------------------------------
   ;; Custom Per-Window Point Memory (Fixes point synchronization across windows)
@@ -1019,15 +900,13 @@ before packages are loaded."
     "otj" 'centaur-tabs-ace-jump
     "otL" 'centaur-tabs-move-current-tab-to-right
     "otH" 'centaur-tabs-move-current-tab-to-left
-    "otg" 'my-centaur-tabs-helm-switch-group
+    "otg" 'scc-helm-centaur-tabs-switch-group
     "ots" (lambda()
             (interactive)
             (centaur-tabs-ace-jump 4))
     "otd" (lambda()
             (interactive)
-            (centaur-tabs-ace-jump 16))
-    "otG" 'my-centaur-tabs-assign-group
-    "otN" 'my-centaur-tabs-new-tab-same-group)
+            (centaur-tabs-ace-jump 16)))
 
   (spacemacs/declare-prefix "otl" "next tab")
   (spacemacs/declare-prefix "oth" "previous tab")
