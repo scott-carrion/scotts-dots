@@ -53,7 +53,7 @@ This function should only modify configuration layer settings."
      (markdown :variables markdown-live-preview-engine 'vmd)
      multiple-cursors
      themes-megapack
-     shell
+     (shell :variables shell-default-position 'full)
      org
      cmake
      (ranger :variables ranger-override-dired 'ranger
@@ -63,9 +63,7 @@ This function should only modify configuration layer settings."
      treemacs
      llm-client
      (ibuffer :variables ibuffer-group-buffers-by 'projects)
-     docker
-     (tabs :variables tabs-selected-tab-bar 'over
-           tabs-icons nil))
+     docker)
 
 
    ;; List of additional packages that will be installed without being wrapped
@@ -653,29 +651,9 @@ Otherwise, return INPUT-STRING unaltered."
         ;; If the regex doesn't match, return the original string
         input-string)))
 
-  (defun scc-helm-centaur-tabs-switch-group ()
-    "Use Helm to choose and switch to an active Centaur Tabs group."
-    (interactive)
-    (unless (bound-and-true-p centaur-tabs-mode)
-      (error "centaur-tabs-mode is not currently active"))
-
-    (let ((groups (centaur-tabs-get-groups)))
-      (if (not groups)
-          (message "No Centaur Tab groups are currently available.")
-        (helm :prompt "Switch to tab group: "
-              :sources (helm-build-sync-source "Centaur Tab Groups"
-                         :candidates groups
-                         :action (lambda (selected-group)
-                                   (centaur-tabs-switch-group selected-group)))
-              :buffer "*helm centaur-tabs groups*"))))
-
   (with-eval-after-load 'spaceline
-    (spaceline-define-segment current-centaur-tab-group
-      "Display the current centaur-tabs group name."
-      (when (bound-and-true-p centaur-tabs-mode)
-        (let ((groups (centaur-tabs-buffer-groups)))
-          (when groups
-            (format "%s" (scc-format-project-name (car groups)))))))
+    (spaceline-define-segment current-buffer-name
+      (format "%s" (buffer-name)))
 
     (defun spaceline-custom-theme (&rest additional-segments)
       "My custom spaceline theme."
@@ -684,7 +662,7 @@ Otherwise, return INPUT-STRING unaltered."
         '((("L:"    persp-name
             "| WS:" workspace-number
             "| W:"  window-number
-            "| TG:" current-centaur-tab-group)
+            "| B:" current-buffer-name)
            :fallback evil-state
            :face highlight-face
            :priority 100)
@@ -809,37 +787,6 @@ before packages are loaded."
   (spacemacs/declare-prefix "ohu" "clear-regexp")
   (spacemacs/declare-prefix "ohC" "clear-all")
 
-  ;; Set centaur tab cycle scope to visible tabs only
-  (setq centaur-tabs-cycle-scope 'tabs)
-
-  ;; Set buffers to exclude drawing a tab bar in
-  (setq centaur-tabs-excluded-prefixes '("*epc"
-                                         "*helm"
-                                         "*Helm"
-                                         " *which"
-                                         "*Compile-Log*"
-                                         "*Choices"
-                                         "*Process"
-                                         "*Calc"
-                                         "*lsp"
-                                         "*LSP"
-                                         "*company"
-                                         "*Flycheck"
-                                         "*Ediff"
-                                         "*ediff"
-                                         "*tramp"
-                                         " *Mini"
-                                         "*straight"
-                                         "*Default-term"
-                                         "*Default-vterm"
-                                         "*compilation*"
-                                         "*"
-                                         "*temp"))
-
-  (centaur-tabs-enable-buffer-alphabetical-reordering)
-  (centaur-tabs-group-by-projectile-project)
-  (setq centaur-tabs-adjust-buffer-order t)
-
   ;; ---------------------------------------------------------------------------
   ;; Custom Per-Window Point Memory (Fixes point synchronization across windows)
   ;; ---------------------------------------------------------------------------
@@ -861,65 +808,6 @@ before packages are loaded."
   ;; Track the point after every command (a very lightweight operation)
   (add-hook 'post-command-hook #'my-save-window-point-constantly)
 
-  (defun my-restore-point-after-tab-switch (orig-fun &rest args)
-    "Advice to force-restore the point after switching tabs via centaur-tabs."
-    (let ((win (selected-window)))
-      (apply orig-fun args)
-      (let* ((hash (window-parameter win 'my-buffer-points))
-             (buf (window-buffer win))
-             (saved-point (and hash (gethash (buffer-name buf) hash))))
-        (when saved-point
-          (with-current-buffer buf
-            ;; Ensure the saved point doesn't exceed current buffer boundaries
-            (set-window-point win (max (point-min) (min (point-max) saved-point))))))))
-
-  ;; Apply the restoration advice to the relevant centaur-tabs navigation commands
-  (dolist (cmd '(centaur-tabs-forward
-                 centaur-tabs-backward
-                 centaur-tabs-forward-group
-                 centaur-tabs-backward-group
-                 centaur-tabs-switch-group
-                 centaur-tabs-ace-jump
-                 centaur-tabs-select-tab))
-    (advice-add cmd :around #'my-restore-point-after-tab-switch))
-
-  ;; SPC o t l: Next tab
-  ;; SPC o t h: Previous tab
-  ;; SPC o t n: Next tab group
-  ;; SPC o t p: Previous tab group
-  ;; SPC o t j: Ace jump to tab
-  ;; SPC o t L: Move tab to the right
-  ;; SPC o t H: Move tab to the left
-  ;; SPC o t g: Switch to tab group
-  (spacemacs/declare-prefix "ot" "tabs")
-  (spacemacs/set-leader-keys
-    "otl" 'centaur-tabs-forward
-    "oth" 'centaur-tabs-backward
-    "otn" 'centaur-tabs-forward-group
-    "otp" 'centaur-tabs-backward-group
-    "otj" 'centaur-tabs-ace-jump
-    "otL" 'centaur-tabs-move-current-tab-to-right
-    "otH" 'centaur-tabs-move-current-tab-to-left
-    "otg" 'scc-helm-centaur-tabs-switch-group
-    "ots" (lambda()
-            (interactive)
-            (centaur-tabs-ace-jump 4))
-    "otd" (lambda()
-            (interactive)
-            (centaur-tabs-ace-jump 16)))
-
-  (spacemacs/declare-prefix "otl" "next tab")
-  (spacemacs/declare-prefix "oth" "previous tab")
-  (spacemacs/declare-prefix "otn" "next group")
-  (spacemacs/declare-prefix "otp" "previous group")
-  (spacemacs/declare-prefix "otj" "select and jump to tab")
-  (spacemacs/declare-prefix "otL" "move tab right")
-  (spacemacs/declare-prefix "otH" "move tab left")
-  (spacemacs/declare-prefix "otg" "switch to tab group")
-  (spacemacs/declare-prefix "ots" "select tab and swap")
-  (spacemacs/declare-prefix "otd" "select tab and delete")
-  (spacemacs/declare-prefix "otG" "assign tab to group")
-  (spacemacs/declare-prefix "otN" "create new tab in group")
 
   ;; Helper function to dynamically list existing saved perspectives
   (defun my-get-saved-perspectives ()
