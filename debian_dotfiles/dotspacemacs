@@ -866,9 +866,99 @@ before packages are loaded."
 
   ;; Useful layout for GDB debugging
   (setq gdb-many-windows t)
+  (setq gdb-debuginfod-enable-setting t)
+  (setq gdb-restore-window-configuration-after-quit t)
+  (setq gdb-stack-buffer-addresses t)
+
+  (defvar scc-gdb-shortcut-command-line nil
+    "The gdb command-line (arguments) string to use for SPC o g g gdb shortcut")
+
+  ;; ---------------------------------------------------------------------------
+  ;; GDB hook that replaces the program input/output buffer with vterm
+  ;; ---------------------------------------------------------------------------
+  (defvar scc-use-vterm-for-gdb t
+    "If non-nil, automatically swap GDB's default I/O buffer for a vterm buffer.")
+
+  (defun scc-toggle-gdb-vterm ()
+    "Toggle the use of vterm for GDB I/O buffers."
+    (interactive)
+    (setq scc-use-vterm-for-gdb (not scc-use-vterm-for-gdb))
+    (message "GDB vterm swap is now %s" (if scc-use-vterm-for-gdb "ENABLED" "DISABLED")))
+
+  (defun scc-gdb-vterm-setup ()
+    "Replaces the default GDB I/O buffer with a vterm buffer and routes TTY."
+    ;; Check the global variable before proceeding
+    (if scc-use-vterm-for-gdb
+        (progn
+          (require 'vterm)
+
+          (let* ((io-buffer-name (gdb-inferior-io-name))
+                 ;; Find the window currently displaying the default I/O buffer
+                 (io-window (get-buffer-window io-buffer-name))
+                 ;; Create a unique name for the vterm buffer based on the GDB session
+                 (vterm-buffer-name (format "*vterm-gdb-io-%s*" (buffer-name)))
+                 (vterm-buffer (get-buffer-create vterm-buffer-name)))
+
+            ;; Initialize vterm quietly in the background
+            (save-window-excursion
+              (with-current-buffer vterm-buffer
+                (unless (derived-mode-p 'vterm-mode)
+                  (vterm-mode))))
+
+            ;; Retrieve the PTY (pseudo-terminal) allocated to vterm
+            (let ((tty (process-tty-name (get-buffer-process vterm-buffer))))
+              (when tty
+                ;; Instruct GDB to route the debugged program's I/O to this PTY
+                (gud-basic-call (format "-gdb-set inferior-tty %s" tty))))
+
+            ;; Hot-swap the default I/O window to display our new vterm buffer
+            (when io-window
+              ;; Remove the dedication lock from the window
+              (set-window-dedicated-p io-window nil)
+
+              ;; Swap the buffer to vterm
+              (set-window-buffer io-window vterm-buffer)
+
+              ;; Re-lock the window to the new vterm buffer
+              (set-window-dedicated-p io-window t)
+
+              ;; Silently kill the default I/O buffer
+              (let ((io-buf (get-buffer io-buffer-name)))
+                (when io-buf
+                  (let ((proc (get-buffer-process io-buf)))
+                    (when proc
+                      ;; Disable the "Buffer has a running process; kill it?" prompt
+                      (set-process-query-on-exit-flag proc nil)))
+                  (kill-buffer io-buf))))))))
+
+  ;; Attach this function to GDB mode.
+  (add-hook 'gdb-mode-hook
+            (lambda ()
+              (when gdb-many-windows
+                (run-with-timer 0.2 nil #'scc-gdb-vterm-setup))))
+
+  ;; GDB-related mnemonics
+  ;; SPC o g g: Start gdb with argument stored in scc-gdb-shortcut-command-line
+  ;; SPC o g G: Start gdb as if it had been started with M-x gdb
+  ;; SPC o g t: Toggle whether vterm is used for gdb sessions instead of default "program I/O".
+  ;;            This is useful when debugging remote targets that don't use the typical I/O
+  ;;            and instead use something like UART which needs to be monitored from a terminal
+  (spacemacs/declare-prefix "og" "gdb")
+  (spacemacs/set-leader-keys
+    "ogg" (lambda ()
+            (interactive)
+            (gdb scc-gdb-shortcut-command-line))
+    "ogG" (lambda ()
+            (interactive)
+            (gdb (list (gud-query-cmdline 'gdb))))
+    "ogt" 'scc-toggle-gdb-vterm)
+  (spacemacs/declare-prefix "ogg" "gdb with command shortcut")
+  (spacemacs/declare-prefix "ogG" "gdb with passed arguments")
+  (spacemacs/declare-prefix "ogt" "toggle vterm instead of i/o")
 
   ;; Enable local values set in .dir-locals.el
   ;; Used to save compilation command and other project(ile)-specific stuff
+  ;; This is deprecated. Use sidecar-locals instead, it's much better
   (setq enable-dir-local-variables t)
 
   ;; Enable sidecar-locals global mode, and set the search paths.
