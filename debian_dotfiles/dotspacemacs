@@ -652,25 +652,17 @@ Otherwise, return INPUT-STRING unaltered."
         input-string)))
 
   (with-eval-after-load 'spaceline
-    (spaceline-define-segment current-buffer-name
-      (format "%s" (buffer-name)))
-
     (defun spaceline-custom-theme (&rest additional-segments)
       "My custom spaceline theme."
       (spaceline-compile
         ;; left side
-        '((("L:"    persp-name
-            "| WS:" workspace-number
-            "| W:"  window-number
-            "| B:" current-buffer-name)
+        '((("[W]" window-number)
            :fallback evil-state
            :face highlight-face
            :priority 100)
           ;;(anzu :priority 95)
           auto-compile
-          ;;((buffer-modified buffer-size buffer-id remote-host)
-          ;; :priority 98)
-          ((buffer-modified buffer-size remote-host)
+          ((buffer-modified buffer-size buffer-id remote-host)
            :priority 98)
           (major-mode :priority 79)
           (process :when active)
