@@ -47,7 +47,7 @@ This function should only modify configuration layer settings."
      emacs-lisp
      (git :variables git-enable-magit-delta-plugin t
           git-enable-magit-todos-plugin t)
-     helm
+     (helm :variables helm-enable-auto-resize t)
      xclipboard
      ;; lsp
      (markdown :variables markdown-live-preview-engine 'vmd)
