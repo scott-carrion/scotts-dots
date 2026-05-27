@@ -463,7 +463,8 @@ It should only modify the values of Spacemacs settings."
    ;;   :size-limit-kb 1000)
    ;; When used in a plist, `visual' takes precedence over `relative'.
    ;; (default nil)
-   dotspacemacs-line-numbers t
+   dotspacemacs-line-numbers '(:relative nil
+                                         :enabled-for-modes all)
 
    ;; Code folding method. Possible values are `evil', `origami' and `vimish'.
    ;; (default 'evil)
@@ -783,13 +784,13 @@ before packages are loaded."
   ;; Custom Per-Window Point Memory (Fixes point synchronization across windows)
   ;; ---------------------------------------------------------------------------
 
-  (defun my-save-window-point-constantly ()
+  (defun scc-save-window-point-constantly ()
     "Silently record the point of the current buffer into the window's memory."
     (when-let* ((win (selected-window))
                 ((window-live-p win)))
-      (let* ((hash (or (window-parameter win 'my-buffer-points)
+      (let* ((hash (or (window-parameter win 'scc-buffer-points)
                        (let ((h (make-hash-table :test 'equal)))
-                         (set-window-parameter win 'my-buffer-points h)
+                         (set-window-parameter win 'scc-buffer-points h)
                          h)))
              (buf-name (buffer-name (window-buffer win)))
              (curr-point (window-point win)))
@@ -798,11 +799,11 @@ before packages are loaded."
           (puthash buf-name curr-point hash)))))
 
   ;; Track the point after every command (a very lightweight operation)
-  (add-hook 'post-command-hook #'my-save-window-point-constantly)
+  (add-hook 'post-command-hook #'scc-save-window-point-constantly)
 
 
   ;; Helper function to dynamically list existing saved perspectives
-  (defun my-get-saved-perspectives ()
+  (defun scc-get-saved-perspectives ()
     "Return a list of saved perspective directories from the cache."
     (let ((persp-dir (expand-file-name "~/.emacs.d/.cache/persp/")))
       (if (file-directory-p persp-dir)
@@ -819,79 +820,74 @@ before packages are loaded."
     (interactive)
     (setq scc-display-workspace-header-line (not scc-display-workspace-header-line)))
 
-  (defun my-spacemacs-header-workspace-tabs ()
+  (defun scc-header-workspace-tabs ()
     "Generate a string of eyebrowse workspaces formatted as a visual tab bar.
   Does nothing if the current buffer has its own header line configured."
-    ;;  Ensure this buffer hasn't defined its own local header line
-    (unless (local-variable-p 'header-line-format)
-      (when (and scc-display-workspace-header-line
-                 (bound-and-true-p eyebrowse-mode)
-                 (eq (selected-window) (frame-selected-window)))
-        (let* ((current-slot (eyebrowse--get 'current-slot))
-               (window-configs (eyebrowse--get 'window-configs))
-               (tabs '())
+    (when (and scc-display-workspace-header-line
+               (bound-and-true-p eyebrowse-mode)
+               (eq (selected-window) (frame-selected-window)))
+      (let* ((current-slot (eyebrowse--get 'current-slot))
+             (window-configs (eyebrowse--get 'window-configs))
+             (tabs '())
 
-               ;; --- NEW LAYOUT EXTRACTION ---
-               ;; Get layout name (fallback to "Default" if persp-mode is inactive)
-               (layout-name (if (and (bound-and-true-p persp-mode)
-                                     (fboundp 'get-current-persp)
-                                     (get-current-persp))
-                                (persp-name (get-current-persp))
-                              "Default"))
+             ;; --- NEW LAYOUT EXTRACTION ---
+             ;; Get layout name (fallback to "Default" if persp-mode is inactive)
+             (layout-name (if (and (bound-and-true-p persp-mode)
+                                   (fboundp 'get-current-persp)
+                                   (get-current-persp))
+                              (persp-name (get-current-persp))
+                            "Default"))
 
-               ;; Find layout numerical index (1-based to match Spacemacs keys like SPC l 1)
-               (layout-number (if (and (bound-and-true-p persp-mode)
-                                       (fboundp 'persp-names))
-                                  (let ((idx (cl-position layout-name (persp-names) :test #'string=)))
-                                    (if idx (1+ idx) 1))
-                                1))
+             ;; Find layout numerical index (1-based to match Spacemacs keys like SPC l 1)
+             (layout-number (if (and (bound-and-true-p persp-mode)
+                                     (fboundp 'persp-names))
+                                (let ((idx (cl-position layout-name (persp-names) :test #'string=)))
+                                  (if idx (1+ idx) 1))
+                              1))
 
-               ;; Format the layout text to display before [WS]
-               (layout-text (format "  %d  %s  " layout-number layout-name)))
+             ;; Format the layout text to display before [WS]
+             (layout-text (format "  %d  %s  " layout-number layout-name)))
 
-          (dolist (window-config window-configs)
-            (let* ((slot (car window-config))
-                   (tag (nth 2 window-config))
-                   (tab-text (if (and tag (> (length tag) 0))
-                                 (format "  %d  %s  " slot tag)
-                               (format "  %d  " slot)))
-                   (is-current (= slot current-slot))
-                   (face (if is-current 'mode-line-highlight 'mode-line-inactive)))
+        (dolist (window-config window-configs)
+          (let* ((slot (car window-config))
+                 (tag (nth 2 window-config))
+                 (tab-text (if (and tag (> (length tag) 0))
+                               (format "  %d  %s  " slot tag)
+                             (format "  %d  " slot)))
+                 (is-current (= slot current-slot))
+                 (face (if is-current 'mode-line-highlight 'mode-line-inactive)))
 
-              (push (propertize tab-text 'face face) tabs)))
+            (push (propertize tab-text 'face face) tabs)))
 
-          (concat (propertize " [L] " 'face 'mode-line-emphasis)
-                  (propertize layout-text 'face 'mode-line-highlight)
-                  (propertize " [WS] " 'face 'mode-line-emphasis)
-                  (mapconcat 'identity (nreverse tabs) (propertize " " 'face 'mode-line-inactive)))))))
+        (concat (propertize " [L] " 'face 'mode-line-emphasis)
+                (propertize layout-text 'face 'mode-line-highlight)
+                (propertize " [WS] " 'face 'mode-line-emphasis)
+                (mapconcat 'identity (nreverse tabs) (propertize " " 'face 'mode-line-inactive))))))
 
-  (setq-default header-line-format '((:eval (my-spacemacs-header-workspace-tabs))))
+  (setq-default header-line-format '((:eval (scc-header-workspace-tabs))))
 
-  (defun my-spacemacs-hide-inactive-header-lines (&rest _)
+  (defun scc-hide-inactive-header-lines (&rest _)
     "Completely disable the header line on windows that do not have focus.
   If `scc-display-workspace-header-line' is nil, forcefully hide it on all windows.
   Skips any window that has a custom buffer-local header line."
     (walk-windows
      (lambda (w)
        ;; Check if the buffer inside the target window has a local header line
-       (unless (local-variable-p 'header-line-format (window-buffer w))
-         (if (and scc-display-workspace-header-line
-                  (eq w (selected-window)))
-             ;; If the toggle is ON and this is the active window, show it
-             (set-window-parameter w 'header-line-format nil)
-           ;; If the toggle is OFF, or if this is an inactive window, kill it
-           (set-window-parameter w 'header-line-format 'none))))
-     nil t))
+       (if (and scc-display-workspace-header-line
+                (eq w (selected-window)))
+           ;; If the toggle is ON and this is the active window, show it
+           (set-window-parameter w 'header-line-format nil)
+         ;; If the toggle is OFF, or if this is an inactive window, kill it
+         (set-window-parameter w 'header-line-format 'none))))
+    nil t)
 
   ;; Run the visibility check automatically whenever you split, close, or resize windows
-  (add-hook 'window-configuration-change-hook #'my-spacemacs-hide-inactive-header-lines)
-  (add-hook 'window-selection-change-functions #'my-spacemacs-hide-inactive-header-lines)
+  (add-hook 'window-configuration-change-hook #'scc-hide-inactive-header-lines)
+  (add-hook 'window-selection-change-functions #'scc-hide-inactive-header-lines)
 
   ;; Mnemonics to save current layout and desktop, then quit
   ;; SPC o p s: Quicksave current perspective to "latest"
   ;; SPC o p l: Quickload current perspective to "latest"
-  ;;
-  ;; NOTE: For this to work, my-centaur-tabs-custom-groups-alist must be added to desktop-locals-to-save in customize menu for desktop.el
   (spacemacs/declare-prefix "op" "perspectives")
   (spacemacs/set-leader-keys
     "ops" (lambda ()
@@ -905,7 +901,7 @@ before packages are loaded."
     "opS" (lambda ()
             (interactive)
             (let* ((persp-name (helm-comp-read "Save perspectives as: "
-                                               (my-get-saved-perspectives)
+                                               (scc-get-saved-perspectives)
                                                :must-match nil
                                                :name "Perspectives"))
                    (safe-name (if (string-blank-p persp-name) "latest" persp-name)))
@@ -913,7 +909,7 @@ before packages are loaded."
               (desktop-save (format "~/.emacs.d/.cache/persp/%s" safe-name))))
     "opL" (lambda ()
             (interactive)
-            (let* ((saved-persps (my-get-saved-perspectives)))
+            (let* ((saved-persps (scc-get-saved-perspectives)))
               (if (null saved-persps)
                   (message "No saved perspectives found in ~/.emacs.d/.cache/persp/")
                 (let ((persp-name (helm-comp-read "Load perspective name: "
