@@ -647,12 +647,12 @@ Return old name on success, otherwise nil."
             (unless new-name
               (setq new-name
                     (read-string
-                     "New name for the perspective: "))
-              (persp--rename new-name persp phash))
-            (message
-             "[persp-mode] Error: You can't rename the `nil' perspective, use \
+                     "New name for the perspective: ")))
+            (persp--rename new-name persp phash))
+        (message
+         "[persp-mode] Error: You can't rename the `nil' perspective, use \
 M-x: customize-variable RET persp-nil-name RET")
-            nil))))
+        nil)))
 
   (with-eval-after-load 'vterm
     ;; Force Evil mode to pass the keys directly to vterm across all input states
