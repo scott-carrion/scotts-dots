@@ -629,6 +629,31 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
   (advice-add 'pdf-view-image-size :override #'+fix-pdf-view-image-size)
   (add-hook 'pdf-view-mode-hook #'pdf-view-themed-minor-mode)
 
+  ;; XXX: This is a partial workaround for a bug injected around 27th May 2026
+  ;; that causes old-name to not be defined when renaming a perspective.
+  ;; It is not clear if something in this configuration is causing that or if
+  ;; it is another instance of the issue described here:
+  ;; https://github.com/Bad-ptr/persp-mode.el/issues/156
+  ;;
+  ;; With this, renaming layouts works, but layout order can become bugged
+  (with-eval-after-load "persp-mode"
+    (cl-defun persp-rename (new-name
+                            &optional (persp (get-current-persp)) (phash *persp-hash*))
+      "Change the name field of the `PERSP'.
+Return old name on success, otherwise nil."
+      (interactive "i")
+      (if persp
+          (progn
+            (unless new-name
+              (setq new-name
+                    (read-string
+                     "New name for the perspective: ")))
+            (persp--rename new-name persp phash))
+        (message
+         "[persp-mode] Error: You can't rename the `nil' perspective, use \
+M-x: customize-variable RET persp-nil-name RET")
+        nil)))
+
   (with-eval-after-load 'vterm
     ;; Force Evil mode to pass the keys directly to vterm across all input states
     (evil-define-key '(insert hybrid emacs normal) vterm-mode-map
