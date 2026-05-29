@@ -99,10 +99,10 @@ alias gbranch='git branch'
 alias gpull='git pull'
 alias gdiff='git diff'
 alias gstash='git stash'
-alias clipboard='xsel --clipboard --input'
 
 # tmux alias
 alias tm='tmux -2 new-session -A -s main'
+alias tmses='tmux -2 new-session -A -s '
 alias tmsp="tmux if-shell -F '#{==:#{prefix},C-Space}' 'set-option -g prefix M-Space; display-message \"Prefix toggled to M-Space\"' 'set-option -g prefix C-Space; display-message \"Prefix toggled to C-Space\"'"
 alias tmsp2="tmux if-shell -F '#{==:#{prefix},C-Space}' 'set-option -g prefix C-M-Space; display-message \"Prefix toggled to C-M-Space\"' 'set-option -g prefix C-Space; display-message \"Prefix toggled to C-Space\"'"
 
@@ -114,6 +114,25 @@ alias tmsp2="tmux if-shell -F '#{==:#{prefix},C-Space}' 'set-option -g prefix C-
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
+
+# Useful utilities, implemented as bash functions
+
+# Simple wrapper around X11 clipboard utility xsel
+# If stdin has any data, it gets copied to the clipboard selection
+# Otherwise, the clipboard selection is output to stdout
+clipboard() {
+    IFS= read -r -d '' -t 0 -N 1;
+
+    # stdin had data, copy to clipboard
+    if [[ $? -eq 0 ]]; then
+        xsel -i -b
+
+        # stdin did not have data, dump clipboard contents to stdout
+    else
+        xsel -o -b
+    fi
+}
+
 
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
@@ -168,5 +187,6 @@ export LANG=C.UTF-8
 
 # Finally, execute tmux
 #if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
-#  exec tmux -2 new-session -A -s main
-#fi
+if [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ] && [ -n "$INSIDE_EMACS" ] ; then
+  exec tmux -2 new-session -A -s ide
+fi
