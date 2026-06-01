@@ -1,0 +1,10 @@
+[user]
+	name = Scott Carrion
+	email = scott.carrion@icloud.com
+[push]
+	autoSetupRemote = true
+[init]
+	defaultBranch = master
+[core]
+	hooksPath = ~/githooks
+
