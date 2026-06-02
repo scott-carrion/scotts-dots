@@ -33,6 +33,11 @@ in
     })
   ];
 
+  imports = [
+    # This pulls in requisite packages, e.g. git, emacs, and emacs package vterm
+    ./spacemacs.nix
+  ];
+
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
   home.username = "skeet";
@@ -60,7 +65,6 @@ in
 
     # Upstream packages (nixpkgs)
     pkgs.vim
-    pkgs.emacs
     pkgs.tmux
     pkgs.powerline
     pkgs.btop
@@ -81,6 +85,8 @@ in
     pkgs.delta
     pkgs.xbindkeys
     pkgs.xsel
+    pkgs.silver-searcher
+    pkgs.ripgrep-all
 
     # pipx with UT disabled, it's broken in nixpkgs 26.05
     (pkgs.pipx.overridePythonAttrs (old: { doCheck = false; }))
@@ -89,12 +95,13 @@ in
     pkgs.tmuxPlugins.sensible
     pkgs.tmuxPlugins.resurrect
 
-    # Software build packages. Disabled by default to avoid collisions with host OS packages
-    #pkgs.git
-    #pkgs.gnumake
-    #pkgs.meson
-    #pkgs.ninja
-    #pkgs.cmake
+    # Software build packages.
+    # Some are disabled by default to avoid collisions with host OS packages
+    pkgs.gnumake
+    pkgs.meson
+    pkgs.ninja
+    pkgs.cmake
+    #pkgs.gcc
 
     # # It is sometimes useful to fine-tune packages, for example, by applying
     # # overrides. You can do that directly here, just don't forget the
@@ -169,9 +176,14 @@ in
   home.sessionVariables = {
     # Installed bashrc uses this as path to source powerline shell binding
     POWERLINE_BASH_BINDING_PATH = "/home/$USER/.nix-profile/share/shell/powerline.sh";
-    # EDITOR = "emacs";
-    #LOCALE_ARCHIVE = "${pkgs.glibcLocales}/lib/locale/locale-archive";
-    #LANG = "en_US.UTF-8";
+    LOCALE_ARCHIVE = "${pkgs.glibcLocales}/lib/locale/locale-archive";
+    LANG = "en_US.UTF-8";
+  };
+
+  #programs.spacemacs.enable = true;
+  programs.spacemacs = {
+    enable = true;
+    revision = "529c7fc3a33682770ac1ef2941eb33df012733eb";
   };
 
   # Let Home Manager install and manage itself.
