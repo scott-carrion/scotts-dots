@@ -91,7 +91,7 @@ in
 
     # Override st config to use config.h from home
     (pkgs.st.overrideAttrs (oldAttrs: {
-       postPatch = "${oldAttrs.postPatch}\n cp ${config.home.file."config".source}/st/config.h config.def.h";
+       postPatch = "${oldAttrs.postPatch}\n cp ${config.home.file.".config".source}/st/config.h config.def.h";
      }))
 
     # pipx with UT disabled, it's broken in nixpkgs 26.05
