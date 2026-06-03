@@ -91,7 +91,7 @@ in
 
     # Override st config to use config.h from home
     (pkgs.st.overrideAttrs (oldAttrs: {
-       postPatch = "${oldAttrs.postPatch}\n cp ${config.home.file."stconfig.h".source} config.def.h";
+       postPatch = "${oldAttrs.postPatch}\n cp ${config.home.file."config".source}/st/config.h config.def.h";
      }))
 
     # pipx with UT disabled, it's broken in nixpkgs 26.05
@@ -131,7 +131,6 @@ in
     # # symlink to the Nix store copy.
     # ".screenrc".source = dotfiles/screenrc;
 
-    "stconfig.h".source = ~/scotts-dots/debian_dotfiles/st/config.h;
     ".bashrc".source = ~/scotts-dots/debian_dotfiles/.bashrc;
     ".vimrc".source = ~/scotts-dots/debian_dotfiles/.vimrc;
     ".spacemacs".source = ~/scotts-dots/debian_dotfiles/.spacemacs;
