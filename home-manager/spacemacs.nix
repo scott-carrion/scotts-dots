@@ -64,9 +64,6 @@ in {
       else
         echo "Spacemacs already exists in ~/.emacs.d, skipping clone."
       fi
-
-      echo "Performing Spacemacs batch init"
-      $DRY_RUN_CMD yes | ${pkgs.emacs}/bin/emacs --batch -l "$HOME/.emacs.d/init.el"
     '';
   };
 }
