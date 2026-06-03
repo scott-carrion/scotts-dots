@@ -31,6 +31,13 @@ in {
         The git revision to clone.
       '';
     };
+
+    dotfile = mkOption {
+      type = types.path;
+      description = ''
+        The path to the .spacemacs dotfile
+      '';
+    };
   };
 
   config = mkIf cfg.enable {
@@ -43,19 +50,23 @@ in {
       pkgs.emacsPackages.vterm
     ];
 
+    # Add file install dependency on .spacemacs
+    home.file.".spacemacs".source = cfg.dotfile;
+
     # Clone the repository dynamically during the Home Manager switch.
-    # We use entryAfter ["writeBoundary"] to ensure this runs after Home Manager 
+    # We use entryAfter writeBoundary and linkGeneration to ensure this runs after Home Manager 
     # has set up standard symlinks, preventing conflicts.
-    home.activation.installSpacemacs = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    home.activation.installSpacemacs = lib.hm.dag.entryAfter [ "linkGeneration" "writeBoundary" ] ''
       if [ ! -d "$HOME/.emacs.d/.git" ]; then
-        echo "Cloning Spacemacs (${cfg.branch} branch)..."
+        echo "Cloning Spacemacs (${cfg.branch} branch), rev ${cfg.revision}..."
         $DRY_RUN_CMD ${pkgs.git}/bin/git clone -b ${cfg.branch} https://github.com/syl20bnr/spacemacs "$HOME/.emacs.d"
         $DRY_RUN_CMD cd "$HOME/.emacs.d" && ${pkgs.git}/bin/git checkout ${cfg.revision}
-        echo "Performing Spacemacs fresh install batch init"
-        $DRY_RUN_CMD yes | ${pkgs.emacs}/bin/emacs --batch -l "$HOME/.emacs.d/init.el"
       else
         echo "Spacemacs already exists in ~/.emacs.d, skipping clone."
       fi
+
+      echo "Performing Spacemacs batch init"
+      $DRY_RUN_CMD yes | ${pkgs.emacs}/bin/emacs --batch -l "$HOME/.emacs.d/init.el"
     '';
   };
 }

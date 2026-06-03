@@ -1,8 +1,6 @@
 # home.nix
 # https://nix-community.github.io/home-manager/options.xhtml
 
-# TODO: Spacemacs install, st install
-
 { config, pkgs, lib, ... }:
 
 let
@@ -133,7 +131,6 @@ in
 
     ".bashrc".source = ~/scotts-dots/debian_dotfiles/.bashrc;
     ".vimrc".source = ~/scotts-dots/debian_dotfiles/.vimrc;
-    ".spacemacs".source = ~/scotts-dots/debian_dotfiles/.spacemacs;
     ".tmux.conf".source = ~/scotts-dots/debian_dotfiles/.tmux.conf;
     ".config" = {
         source = ~/scotts-dots/debian_dotfiles/.config;
@@ -189,6 +186,7 @@ in
   programs.spacemacs = {
     enable = true;
     revision = "529c7fc3a33682770ac1ef2941eb33df012733eb";
+    dotfile = ~/scotts-dots/debian_dotfiles/.spacemacs;
   };
 
   # Let Home Manager install and manage itself.
