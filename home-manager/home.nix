@@ -27,6 +27,7 @@ in
           };
         });
       };
+
       powerline = prev.powerline.overrideAttrs (oldAttrs: {
         propagatedBuildInputs = (oldAttrs.propagatedBuildInputs or [ ]) ++ [powerline-gitstatus];
       });
@@ -88,6 +89,11 @@ in
     pkgs.silver-searcher
     pkgs.ripgrep-all
 
+    # Override st config to use config.h from home
+    (pkgs.st.overrideAttrs (oldAttrs: {
+       postPatch = "${oldAttrs.postPatch}\n cp ${config.home.file."stconfig.h".source} config.def.h";
+     }))
+
     # pipx with UT disabled, it's broken in nixpkgs 26.05
     (pkgs.pipx.overridePythonAttrs (old: { doCheck = false; }))
 
@@ -125,6 +131,7 @@ in
     # # symlink to the Nix store copy.
     # ".screenrc".source = dotfiles/screenrc;
 
+    "stconfig.h".source = ~/scotts-dots/debian_dotfiles/st/config.h;
     ".bashrc".source = ~/scotts-dots/debian_dotfiles/.bashrc;
     ".vimrc".source = ~/scotts-dots/debian_dotfiles/.vimrc;
     ".spacemacs".source = ~/scotts-dots/debian_dotfiles/.spacemacs;
@@ -180,7 +187,6 @@ in
     LANG = "en_US.UTF-8";
   };
 
-  #programs.spacemacs.enable = true;
   programs.spacemacs = {
     enable = true;
     revision = "529c7fc3a33682770ac1ef2941eb33df012733eb";
