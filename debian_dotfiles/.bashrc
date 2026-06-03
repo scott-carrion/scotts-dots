@@ -192,7 +192,7 @@ set -b
 # Export other bash vars
 #export DOCKER_HOST=unix:///run/user/1000/docker.sock
 
-export LANG=C.UTF-8
+export LANG=en_US.UTF-8
 
 # Finally, execute tmux
 #if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
