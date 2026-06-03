@@ -194,8 +194,10 @@ set -b
 
 export LANG=en_US.UTF-8
 
-# Finally, execute tmux
-#if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
-if [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ] && [ -n "$INSIDE_EMACS" ] ; then
-  exec tmux -2 new-session -A -s ide
+# This executes tmux if in an interactive shell not already running tmux
+if [[ -n "$INSIDE_EMACS" ]]; then
+  tmses ide
+elif [[ "$TERM_PROGRAM" != "tmux" ]]; then
+  tm
 fi
+
