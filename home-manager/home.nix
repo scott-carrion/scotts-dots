@@ -67,7 +67,6 @@ in
     pkgs.tmux
     pkgs.powerline
     pkgs.btop
-    pkgs.wireshark
     pkgs.ranger
     pkgs.polybar
     pkgs.i3
@@ -84,7 +83,7 @@ in
     pkgs.delta
     pkgs.xbindkeys
     pkgs.xsel
-    pkgs.silver-searcher
+    #pkgs.silver-searcher
     pkgs.ripgrep-all
 
     # Override st config to use config.h from home
