@@ -171,6 +171,7 @@
 # lan_ip.sh {
 	# Symbol for LAN IP.
 	# export TMUX_POWERLINE_SEG_LAN_IP_SYMBOL="ⓛ "
+	export TMUX_POWERLINE_SEG_LAN_IP_SYMBOL="  "
 	# Symbol colour for LAN IP
 	# export TMUX_POWERLINE_SEG_LAN_IP_SYMBOL_COLOUR="255"
 # }
