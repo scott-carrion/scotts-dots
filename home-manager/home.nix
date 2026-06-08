@@ -69,8 +69,9 @@ in
     pkgs.btop
     pkgs.ranger
     pkgs.polybar
-    pkgs.i3
-    pkgs.i3lock-fancy
+    # These are probably better installed at the system level
+    #pkgs.i3
+    #pkgs.i3lock-fancy
     pkgs.glibcLocales
     pkgs.python314Packages.cogapp
     pkgs.ncurses
@@ -99,11 +100,11 @@ in
     pkgs.tmuxPlugins.resurrect
 
     # Software build packages.
-    # Some are disabled by default to avoid collisions with host OS packages
-    pkgs.gnumake
-    pkgs.meson
-    pkgs.ninja
-    pkgs.cmake
+    # These are probably better installed at the system level or containerized
+    #pkgs.gnumake
+    #pkgs.meson
+    #pkgs.ninja
+    #pkgs.cmake
     #pkgs.gcc
 
     # # It is sometimes useful to fine-tune packages, for example, by applying
