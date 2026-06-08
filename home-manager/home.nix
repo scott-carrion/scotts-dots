@@ -176,8 +176,8 @@ in
   #  /etc/profiles/per-user/skeet/etc/profile.d/hm-session-vars.sh
   #
   home.sessionVariables = {
-    # Installed bashrc uses this as path to source powerline shell binding
-    POWERLINE_BASH_BINDING_PATH = "/home/$USER/.nix-profile/share/shell/powerline.sh";
+    # Installed bashrc uses this as path to source powerline bash binding
+    POWERLINE_BASH_BINDING_PATH = "/home/$USER/.nix-profile/share/bash/powerline.sh";
     LOCALE_ARCHIVE = "${pkgs.glibcLocales}/lib/locale/locale-archive";
     LANG = "en_US.UTF-8";
   };

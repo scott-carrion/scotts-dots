@@ -158,7 +158,7 @@ fi
 
 # powerline config.
 # Configure at /usr/share/powerline/config_files
-# Set POWERLINE_BASH_BINDING_PATH to override, e.g. ~/.nix-profile/share/shell/powerline.sh for nix
+# Set POWERLINE_BASH_BINDING_PATH to override, e.g. ~/.nix-profile/share/bash/powerline.sh for nix
 _POWERLINE_BASH_BINDING_PATH="${POWERLINE_BASH_BINDING_PATH:-/usr/share/powerline/bindings/bash/powerline.sh}"
 if [ -f ${_POWERLINE_BASH_BINDING_PATH} ]; then
   powerline-daemon -q
