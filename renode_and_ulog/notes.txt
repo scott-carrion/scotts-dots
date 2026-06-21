@@ -1,0 +1,21 @@
+This contains some improvements to ulog that optimizes case where logging verbosity is below the global minimum-configured one.
+The caller (which calls the appropriate logging macro) makes a comparison with a singleton variable holding the lowest configured log verbosity before calling plog_message
+This saves time/memory by avoiding the need for setup of stack for plog_message in the average case
+Tested on renode emulator of rt1189. Was able to get the demo app and ulog working with the following workaround:
+In hardware_init.c, comment out BOARD_InitBootClocks(). Something there is doing hardware I/O that does not exist in the emulator
+
+The console logger I put in main.c looks like this:
+void my_console_logger(ulog_level_t severity, char *msg) {
+  PRINTF("[%s]: %s\r\n", ulog_level_name(severity), msg);
+}
+
+Then, in main:
+ULOG_INIT();
+ULOG_SUBSCRIBE(my_console_logger, ULOG_TRACE_LEVEL);
+
+ULOG_TRACE("XXX SCC DEBUG TRACE");
+ULOG_DEBUG("XXX SCC DEBUG DEBUG");
+ULOG_INFO("XXX SCC DEBUG INFO");
+ULOG_WARNING("XXX SCC DEBUG WARNING");
+ULOG_ERROR("XXX SCC DEBUG ERROR");
+ULOG_CRITICAL("XXX SCC DEBUG CRITICAL");

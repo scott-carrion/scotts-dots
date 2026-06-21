@@ -1,0 +1,21 @@
+:name: MIMXRT1180-EVK (i.MX RT1180)
+:description: This script runs MCUX hello world sample (with FlexSPI NOR XIP flash config) on MIMXRT1180-EVK.
+
+i @platforms/boards/mimxrt1180_evk.repl
+
+$bin?="/home/skeet/Documents/code/rt1180_renode/mcux_workspace/mcuxpresso-sdk/build/hello_world_cm33.elf"
+
+# XXX SCC NOTE: FlexSPI XIP builds won't work as the peripheral is not supported by renode
+
+macro reset
+"""
+    sysbus LoadELF $bin
+    #cpu_m33 LogFunctionNames true
+    cpu_m33 VectorTableOffset `sysbus GetSymbolAddress "__isr_vector"`
+
+"""
+
+#machine StartGdbServer 2331
+runMacro $reset
+
+showAnalyzer lpuart1
