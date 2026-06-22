@@ -19,3 +19,13 @@ ULOG_INFO("XXX SCC DEBUG INFO");
 ULOG_WARNING("XXX SCC DEBUG WARNING");
 ULOG_ERROR("XXX SCC DEBUG ERROR");
 ULOG_CRITICAL("XXX SCC DEBUG CRITICAL");
+
+Checked in freertos_hello.c with universal 4-bit ANSI color logging support
+Did some testing and in renode there was no net benefit to the changes I made
+The timing isn't accurate to real life, though
+Maybe real hardware will see some better results
+
+Included a bugfix patch to both flavors of ulog:
+https://github.com/rdpoor/ulog/pull/21/files
+
+The original version of ulog with just the patch are included as well

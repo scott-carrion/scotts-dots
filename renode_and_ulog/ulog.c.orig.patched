@@ -1,3 +1,34 @@
+/**
+MIT License
+
+Copyright (c) 2019 R. Dunbar Poor <rdpoor@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+/**
+ * \file ulog.c
+ *
+ * \brief uLog: lightweight logging for embedded systems
+ *
+ * See ulog.h for sparse documentation.
+ */
+
 #include "ulog.h"
 
 #ifdef ULOG_ENABLED  // whole file...
@@ -5,6 +36,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+
 
 // =============================================================================
 // types and definitions
@@ -14,24 +46,21 @@ typedef struct {
   ulog_level_t threshold;
 } subscriber_t;
 
-static ulog_level_t ulog_update_lowest_log_level();
+static ulog_level_t ulog_lowest_log_level();
 
 // =============================================================================
 // local storage
 
-
 static subscriber_t s_subscribers[ULOG_MAX_SUBSCRIBERS];
-
 static char s_message[ULOG_MAX_MESSAGE_LENGTH];
-
-ulog_level_t s_lowest_log_level;
+static ulog_level_t s_lowest_log_level;
 
 // =============================================================================
 // user-visible code
 
 void ulog_init() {
   memset(s_subscribers, 0, sizeof(s_subscribers));
-  s_lowest_log_level = ulog_update_lowest_log_level();
+  s_lowest_log_level = ulog_lowest_log_level();
 }
 
 // search the s_subscribers table to install or update fn
@@ -56,7 +85,7 @@ ulog_err_t ulog_subscribe(ulog_function_t fn, ulog_level_t threshold) {
   }
   s_subscribers[available_slot].fn = fn;
   s_subscribers[available_slot].threshold = threshold;
-  s_lowest_log_level = ulog_update_lowest_log_level(); // Update lowest log level
+  s_lowest_log_level = ulog_lowest_log_level(); // Update lowest log level
 
   return ULOG_ERR_NONE;
 }
@@ -67,7 +96,7 @@ ulog_err_t ulog_unsubscribe(ulog_function_t fn) {
   for (i=0; i<ULOG_MAX_SUBSCRIBERS; i++) {
     if (s_subscribers[i].fn == fn) {
       s_subscribers[i].fn = NULL;    // mark as empty
-      s_lowest_log_level = ulog_update_lowest_log_level(); // Update lowest log level
+      s_lowest_log_level = ulog_lowest_log_level(); // Update lowest log level
       return ULOG_ERR_NONE;
     }
   }
@@ -89,9 +118,9 @@ const char *ulog_level_name(ulog_level_t severity) {
 
 void ulog_message(ulog_level_t severity, const char *fmt, ...) {
   // Do not evaluate the log message if it will never be logged
-  //if (severity < s_lowest_log_level){
-  //  return;
-  //}
+  if (severity < s_lowest_log_level){
+    return;
+  }
 
   va_list ap;
   int i;
@@ -108,12 +137,10 @@ void ulog_message(ulog_level_t severity, const char *fmt, ...) {
   }
 }
 
-ulog_level_t ulog_get_lowest_level() { return s_lowest_log_level; }
-
 // =============================================================================
 // private code
 
-static ulog_level_t ulog_update_lowest_log_level(){
+static ulog_level_t ulog_lowest_log_level(){
   ulog_level_t lowest_log_level = ULOG_ALWAYS_LEVEL;
   int i;
   for (i=0; i<ULOG_MAX_SUBSCRIBERS; i++) {
@@ -126,4 +153,4 @@ static ulog_level_t ulog_update_lowest_log_level(){
   return lowest_log_level;
 }
 
-#endif  // ifdef ULOG_ENABLED
+#endif  // #ifdef ULOG_ENABLED
