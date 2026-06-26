@@ -170,22 +170,21 @@ fi
 # i3 tinkering: unset SESSION_MANAGER
 # If i3 is the current WM, unset SESSION_MANAGER env var
 # to avoid 1-second vim startup delay in case where GNOME ran before i3
-if [ ! -z "$SESSION_MANAGER" ]; then
-  unset SESSION_MANAGER
-fi
-
-# pywal colorscheme activation
-# only activate if user is "skeet" (me)
-#if [ $USER == "skeet" ] && [ -z "$SSH_CLIENT" ]; then
-#  (cat ~/.cache/wal/sequences &)
+#if [ ! -z "$SESSION_MANAGER" ]; then
+#  unset SESSION_MANAGER
 #fi
 
+# pywal colorscheme activation
+if [ -z "$SSH_CLIENT" ] && [ "$(tmux display-message -p "#S")" != "ide" ]; then
+  (cat ~/.cache/wal/sequences &)
+fi
+
 # Exporting these environment variables sets default text editor to vim
-export EDITOR="/usr/bin/vim"
-export VISUAL="/usr/bin/vim"
+export EDITOR="vim"
+export VISUAL="vim"
 
 # Set bash options (see man bash for more info)
-# This one sets background jobs to notify immediately upon exit, instead of 
+# This one sets background jobs to notify immediately upon exit, instead of
 # waiting for the next terminal prompt
 set -b
 
