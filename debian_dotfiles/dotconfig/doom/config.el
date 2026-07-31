@@ -1,0 +1,212 @@
+;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
+
+;; Bare metal install notes (non-nix):
+;; NOTE: Symbols Nerd Font is needed. https://nerdfonts.com. (M-x nerd-icons-install-fonts)
+;; NOTE: ripgrep is needed (apt install ripgrep)
+;; NOTE: fd is needed (apt install fd-find)
+;; NOTE: lsp module must be enabled for cc layer to work properly: https://langserver.org/
+;;       ccls (apt install ccls) works with eglot (default), and it needs to consume a compile_commands.json.
+;;       Setting CMAKE_EXPORT_COMPILE_COMMANDS to ON in CMake causes it to be generated in the build directory,
+;;       but by default ccls expects it in the project root. Symlinking is the easiest way to do this, but
+;;       supposedly you can also change eglot-server-programs to invoke ccls with the compilationDatabaseDirectory
+;;       option to point it to the build directory. That is complex elisp tinkering that I want to avoid.
+;;
+;;       For CMake LSP support, neomakelsp or cmake-language-server are needed
+;;
+;;       Relevant docs:
+;;       https://joaotavora.github.io/eglot/#Setting-Up-LSP-Servers
+;;       https://github.com/MaskRay/ccls/wiki/Project-Setup#compile_commandsjson
+;;
+;; NOTE: Shockingly, the ghostel terminal emulator just works. Use char mode C-c C-l to have all input pass to the
+;;       terminal. The only way out of this mode is M-RET, which is perfect.
+;;       There is a persp-mode binding active here, so it's easy to leave char mode once done with the terminal and
+;;       then swap perspectives. The default C-c bindings also claim to help with copying scrollback
+
+;; Place your private configuration here! Remember, you do not need to run 'doom
+;; sync' after modifying this file!
+
+
+;; Some functionality uses this to identify you, e.g. GPG configuration, email
+;; clients, file templates and snippets. It is optional.
+;; (setq user-full-name "John Doe"
+;;       user-mail-address "john@doe.com")
+
+;; Doom exposes five (optional) variables for controlling fonts in Doom:
+;;
+;; - `doom-font' -- the primary font to use
+;; - `doom-variable-pitch-font' -- a non-monospace font (where applicable)
+;; - `doom-big-font' -- used for `doom-big-font-mode'; use this for
+;;   presentations or streaming.
+;; - `doom-symbol-font' -- for symbols
+;; - `doom-serif-font' -- for the `fixed-pitch-serif' face
+;;
+;; See 'C-h v doom-font' for documentation and more examples of what they
+;; accept. For example:
+;;
+;;(setq doom-font (font-spec :family "Fira Code" :size 12 :weight 'semi-light)
+;;      doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
+;;
+;; If you or Emacs can't find your font, use 'M-x describe-font' to look them
+;; up, `M-x eval-region' to execute elisp code, and 'M-x doom/reload-font' to
+;; refresh your font settings. If Emacs still can't find your font, it likely
+;; wasn't installed correctly. Font issues are rarely Doom issues!
+
+;; There are two ways to load a theme. Both assume the theme is installed and
+;; available. You can either set `doom-theme' or manually load a theme with the
+;; `load-theme' function. This is the default:
+;(setq doom-theme 'doom-one)
+(setq doom-theme 'catppuccin)
+
+;; This determines the style of line numbers in effect. If set to `nil', line
+;; numbers are disabled. For relative line numbers, set this to `relative'.
+(setq display-line-numbers-type t)
+
+;; If you use `org' and don't want your org files in the default location below,
+;; change `org-directory'. It must be set before org loads!
+(setq org-directory "~/org/")
+
+(setq doom-font (font-spec :family "Iosevka" :size 16 :weight 'normal :width 'normal))
+
+;; Whenever you reconfigure a package, make sure to wrap your config in an
+;; `with-eval-after-load' block, otherwise Doom's defaults may override your
+;; settings. E.g.
+;;
+;;   (with-eval-after-load 'PACKAGE
+;;     (setq x y))
+;;
+;; The exceptions to this rule:
+;;
+;;   - Setting file/directory variables (like `org-directory')
+;;   - Setting variables which explicitly tell you to set them before their
+;;     package is loaded (see 'C-h v VARIABLE' to look them up).
+;;   - Setting doom variables (which start with 'doom-' or '+').
+;;
+;; Here are some additional functions/macros that will help you configure Doom.
+;;
+;; - `load!' for loading external *.el files relative to this one
+;; - `add-load-path!' for adding directories to the `load-path', relative to
+;;   this file. Emacs searches the `load-path' when you load packages with
+;;   `require' or `use-package'.
+;; - `map!' for binding new keys
+;;
+;; To get information about any of these functions/macros, move the cursor over
+;; the highlighted symbol at press 'K' (non-evil users must press 'C-c c k').
+;; This will open documentation for it, including demos of how they are used.
+;; Alternatively, use `C-h o' to look up a symbol (functions, variables, faces,
+;; etc).
+;;
+;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
+;; they are implemented.
+
+;; Add hook to activate magit-delta by default, and activate magit-todos
+;; TODO: magit-todos-mode is not working
+;;(add-hook 'magit-mode-hook (lambda () (magit-delta-mode +1) (magit-todos-mode 1)))
+(add-hook 'magit-mode-hook (lambda () (magit-delta-mode +1)))
+
+;; Enable smart soft word wrapping everywhere
+(+global-word-wrap-mode +1)
+
+;; Enable sidecar-locals, and set allow-list
+(sidecar-locals-mode)
+(setq sidecar-locals-paths-allow (list "~/Documents/code/*"))
+
+;; Compilation buffer skips past warnings but still counts them
+(setq-default compilation-skip-threshold 2)
+
+;; Extend org mode todo keywords to include more states for local task tracking
+(setq-default org-todo-keywords
+              '((sequence "TODO(t)"
+                          "NEXT(n)"
+                          "IN_PROGRESS(p!)"
+                          "IN_REVIEW(r!)"
+                          "|"
+                          "DONE(d!)")
+                (sequence "BLOCKED(b@)")
+                (sequence "|"
+                          "CANCELLED(c@)")
+                (sequence "LATER(l@)")
+                (sequence "MAYBE(m@)")))
+
+;; Set corresponding faces for each of the items above
+(setq-default org-todo-keyword-faces
+              '(("TODO". org-todo)
+                ("NEXT" . org-warning)
+                ("IN_PROGRESS" . org-cite)
+                ("IN_REVIEW" . org-agenda-current-time)
+                ("DONE" . org-done)
+                ("BLOCKED" . org-habit-overdue-face)
+                ("CANCELLED" . markdown-strike-through-face)
+                ("LATER" . org-document-title)
+                ("MAYBE" . org-dispatcher-highlight)))
+
+;; Set catppuccin theme flavor. Options: frappe, latte, macchiato, or mocha
+(setq catppuccin-flavor 'macchiato)
+
+;; Modeline configuration
+(setq doom-modeline-display-default-persp-name t)
+(setq doom-modeline-persp-name t)
+
+;; Useful layout for GDB debugging
+(setq gdb-many-windows t)
+(setq gdb-debuginfod-enable-setting t)
+(setq gdb-restore-window-configuration-after-quit t)
+(setq gdb-stack-buffer-addresses t)
+
+;; Keybindings
+;; Useful reference:
+;; https://discourse.doomemacs.org/t/how-to-re-bind-keys/56
+;; https://rameezkhan.me/posts/2020/2020-07-03--adding-keybindings-to-doom-emacs/
+
+;; Disable C-h == help instead of delete
+(map! "C-h" 'backward-delete-char)
+
+;; Window management: SPC w
+;; Replaces SPC w x (evil-window-exchange) with kill-buffer-and-window
+(map! :leader
+      :desc "Kill buffer and window" "w x" #'kill-buffer-and-window
+      :desc "evil-window-split" "w -" #'evil-window-split
+      :desc "evil-window-split-vertical" "w /" #'evil-window-vsplit)
+
+;; Navigation: SPC j
+;; Avy does have variants of these restricting candidates to above/below cursor and in same line,
+;; but I don't really think I'll be using them too much
+(map! :leader
+      (:prefix ("j" . "jump to")
+       :desc "String" "j" #'avy-goto-char-timer
+       :desc "Line" "l" #'avy-goto-line
+       :desc "Word" "w" #'avy-goto-word-0
+       :desc "Word starting with char" "W" #'avy-goto-word-1
+       :desc "Char x1" "k" #'avy-goto-char
+       :desc "Char x2" "K" #'avy-goto-char-2
+       :desc "Last change" "c" #'goto-last-change
+       :desc "Next change" "C" #'goto-last-change-reverse
+       :desc "File (deer)" "d" #'deer
+       :desc "File (ranger)" "r" #'ranger))
+
+;; Workspaces: SPC l
+;; This just remaps the workspaces from SPC TAB to SPC l
+;; Reference: https://github.com/doomemacs/core/issues/4569
+;; The comment about which-key labels not going with the move seems inaccurate, this works fine
+(map! :leader :desc "workspaces" "l" doom-leader-workspace-map "TAB")
+
+;; Clipboard: SPC y
+(map! :leader
+      (:prefix ("y" . "yank")
+       :desc "copy" "y" #'clipboard-kill-ring-save
+       :desc "paste" "p" #'clipboard-yank
+       :desc "remember clipboard" "r" #'remember-clipboard))
+
+;; Highlighting: SPC H
+(defun clear-all-highlights ()
+  "Toggles hi-lock-mode to clear all highlighting"
+  (interactive)
+  (hi-lock-mode 0)
+  (hi-lock-mode 1))
+
+(map! :leader
+      (:prefix ("H" . "highlight")
+       :desc "Symbol at point" "." #'highlight-symbol-at-point
+       :desc "Regexp" "r" #'highlight-regexp
+       :desc "Clear regexp" "u" #'unhighlight-regexp
+       :desc "Clear all" "C" #'clear-all-highlights))
+
