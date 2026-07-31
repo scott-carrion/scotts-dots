@@ -17,16 +17,12 @@
 (package! goto-chg)
 (package! ranger)
 (package! magit-delta)
-
-;; FIXME: magit-todos is not working
-;;(package! pcre2el)
-;;(package! dash)
-;;(package! f)
-;;(package! hl-todo)
-;;(package! s)
-;;(package! magit-todos)
-;;
-;;(require 'magit-todos)
+(package! pcre2el)
+(package! dash)
+(package! f)
+(package! hl-todo)
+(package! s)
+(package! magit-todos)
 
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:

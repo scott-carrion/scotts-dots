@@ -98,10 +98,14 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-;; Add hook to activate magit-delta by default, and activate magit-todos
-;; TODO: magit-todos-mode is not working
-;;(add-hook 'magit-mode-hook (lambda () (magit-delta-mode +1) (magit-todos-mode 1)))
+;; Add hook to activate magit-delta by default
 (add-hook 'magit-mode-hook (lambda () (magit-delta-mode +1)))
+
+;; Enable magit-todos plugin
+(use-package! magit-todos
+  :after magit
+  :config
+  (magit-todos-mode 1))
 
 ;; Enable smart soft word wrapping everywhere
 (+global-word-wrap-mode +1)
@@ -112,39 +116,44 @@
 
 ;; Compilation buffer skips past warnings but still counts them
 (setq-default compilation-skip-threshold 2)
-
 ;; Extend org mode todo keywords to include more states for local task tracking
-(setq-default org-todo-keywords
-              '((sequence "TODO(t)"
-                          "NEXT(n)"
-                          "IN_PROGRESS(p!)"
-                          "IN_REVIEW(r!)"
-                          "|"
-                          "DONE(d!)")
-                (sequence "BLOCKED(b@)")
-                (sequence "|"
-                          "CANCELLED(c@)")
-                (sequence "LATER(l@)")
-                (sequence "MAYBE(m@)")))
+(after! org (setq-default org-todo-keywords
+                          '((sequence "TODO(t)"
+                                      "NEXT(n)"
+                                      "IN_PROGRESS(p!)"
+                                      "IN_REVIEW(r!)"
+                                      "|"
+                                      "DONE(d!)")
+                            (sequence "BLOCKED(b@)")
+                            (sequence "|"
+                                      "CANCELLED(c@)")
+                            (sequence "LATER(l@)")
+                            (sequence "MAYBE(m@)"))))
 
 ;; Set corresponding faces for each of the items above
-(setq-default org-todo-keyword-faces
-              '(("TODO". org-todo)
-                ("NEXT" . org-warning)
-                ("IN_PROGRESS" . org-cite)
-                ("IN_REVIEW" . org-agenda-current-time)
-                ("DONE" . org-done)
-                ("BLOCKED" . org-habit-overdue-face)
-                ("CANCELLED" . markdown-strike-through-face)
-                ("LATER" . org-document-title)
-                ("MAYBE" . org-dispatcher-highlight)))
+(after! org (setq-default org-todo-keyword-faces
+                          '(("TODO". org-todo)
+                            ("NEXT" . +org-todo-active)
+                            ("IN_PROGRESS" . org-priority)
+                            ("IN_REVIEW" . org-footnote)
+                            ("DONE" . org-done)
+                            ("BLOCKED" . +org-todo-onhold)
+                            ("CANCELLED" . +org-todo-cancel)
+                            ("LATER" . org-document-title)
+                            ("MAYBE" . org-dispatcher-highlight))))
 
 ;; Set catppuccin theme flavor. Options: frappe, latte, macchiato, or mocha
 (setq catppuccin-flavor 'macchiato)
 
+;; Set buffer display name "unique-ification" strategy
+(setq uniquify-buffer-name-style 'forward)
+
 ;; Modeline configuration
 (setq doom-modeline-display-default-persp-name t)
 (setq doom-modeline-persp-name t)
+
+;; Add hook to enable themed view in PDF minor mode
+(add-hook 'pdf-view-mode-hook #'pdf-view-themed-minor-mode)
 
 ;; Useful layout for GDB debugging
 (setq gdb-many-windows t)
@@ -157,7 +166,7 @@
 ;; https://discourse.doomemacs.org/t/how-to-re-bind-keys/56
 ;; https://rameezkhan.me/posts/2020/2020-07-03--adding-keybindings-to-doom-emacs/
 
-;; Disable C-h == help instead of delete
+;; Misc
 (map! "C-h" 'backward-delete-char)
 
 ;; Window management: SPC w
@@ -188,6 +197,9 @@
 ;; Reference: https://github.com/doomemacs/core/issues/4569
 ;; The comment about which-key labels not going with the move seems inaccurate, this works fine
 (map! :leader :desc "workspaces" "l" doom-leader-workspace-map "TAB")
+(map! :leader
+      :desc "Switch to last workspace" "l TAB" #'+workspace/other
+      :desc "Display tab bar" "l i" #'+workspace/display)
 
 ;; Clipboard: SPC y
 (map! :leader
@@ -210,3 +222,7 @@
        :desc "Clear regexp" "u" #'unhighlight-regexp
        :desc "Clear all" "C" #'clear-all-highlights))
 
+;; Projectile: SPC p
+(map! :leader
+      :desc "Install project" "p I" #'projectile-install-project
+      :desc "Package project" "p P" #'projectile-package-project)
