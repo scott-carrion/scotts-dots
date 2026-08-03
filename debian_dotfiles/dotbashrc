@@ -121,15 +121,13 @@ fi
 # If stdin has any data, it gets copied to the clipboard selection
 # Otherwise, the clipboard selection is output to stdout
 clipboard() {
-    IFS= read -r -d '' -t 0 -N 1;
-
-    # stdin had data, copy to clipboard
-    if [[ $? -eq 0 ]]; then
-        xsel -i -b
-
-        # stdin did not have data, dump clipboard contents to stdout
-    else
+    local lastpipe=$?
+    # If FD 0 (stdin) is connected to a terminal, just dump current clipboard contents
+    if [[ -t 0 ]]; then
         xsel -o -b
+    # Otherwise, FD 0 (stdin) is connected to a pipe or redirect. Read it into clipboard
+    else
+        cat | xsel -i -b
     fi
 }
 
