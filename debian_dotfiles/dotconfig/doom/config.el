@@ -116,6 +116,7 @@
 
 ;; Compilation buffer skips past warnings but still counts them
 (setq-default compilation-skip-threshold 2)
+
 ;; Extend org mode todo keywords to include more states for local task tracking
 (after! org (setq-default org-todo-keywords
                           '((sequence "TODO(t)"
@@ -226,3 +227,45 @@
 (map! :leader
       :desc "Install project" "p I" #'projectile-install-project
       :desc "Package project" "p P" #'projectile-package-project)
+
+;; Ghostel (terminal)
+(map! :after ghostel
+      :map ghostel-mode-map
+      :desc "Switch to last workspace" "C-c TAB" #'+workspace/other)
+
+;; PDF tool tweaks
+;; This makes middle mouse click into a "hand tool"-esque pan
+(defun +scc/pdf-view-hand-tool (event)
+  "Pan the PDF by clicking and dragging, like a hand tool."
+  (interactive "e")
+  (let* ((start-pos (mouse-pixel-position))
+         (start-x (cadr start-pos))
+         (start-y (cddr start-pos))
+         (start-vscroll (window-vscroll nil t))
+         (start-hscroll (window-hscroll)))
+    (track-mouse
+      (let ((done nil))
+        (while (not done)
+          (let ((e (read-event)))
+            (cond
+             ((mouse-movement-p e)
+              (let* ((new-pos (mouse-pixel-position))
+                     (new-x (cadr new-pos))
+                     (new-y (cddr new-pos)))
+                (when (and new-x new-y start-x start-y)
+                  (let ((dy (- start-y new-y))
+                        (dx (/ (- start-x new-x) (frame-char-width))))
+                    ;; Dynamically scroll the window based on pixel displacement
+                    (set-window-vscroll nil (max 0 (+ start-vscroll dy)) t)
+                    (set-window-hscroll nil (max 0 (+ start-hscroll dx)))))))
+
+             ;; End the drag when the mouse button is released
+             ((memq (car-safe e) '(drag-mouse-1 drag-mouse-2 drag-mouse-3
+                                   mouse-1 mouse-2 mouse-3
+                                   up-mouse-1 up-mouse-2 up-mouse-3))
+              (setq done t)))))))))
+
+;; Bind the new hand tool to pdf-view-mode
+(map! :after pdf-tools
+      :map pdf-view-mode-map
+      "<down-mouse-2>" #'+scc/pdf-view-hand-tool)
