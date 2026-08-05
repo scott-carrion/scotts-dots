@@ -162,6 +162,19 @@
 (setq gdb-restore-window-configuration-after-quit t)
 (setq gdb-stack-buffer-addresses t)
 
+(defvar +scc/gdb-shortcut-command-line-args nil
+  "The gdb command line arguments to use for gdb shortcut")
+
+(defun +scc/gdb-shortcut ()
+  "Shortcut to launch gdb with arguments given by +scc/gdb-shortcut-command-line-args"
+  (interactive)
+  (gdb +scc/gdb-shortcut-command-line-args))
+
+(defun +scc/gdb-shortcut-no-args ()
+  "Shortcut to launch gdb as if invoked with M-x gdb"
+  (interactive)
+  (gdb (list (gud-query-cmdline 'gdb))))
+
 ;; Keybindings
 ;; Useful reference:
 ;; https://discourse.doomemacs.org/t/how-to-re-bind-keys/56
@@ -227,6 +240,12 @@
 (map! :leader
       :desc "Install project" "p I" #'projectile-install-project
       :desc "Package project" "p P" #'projectile-package-project)
+
+;; GDB
+(map! :leader
+      :desc "gdb (shortcut)" "o g" #'+scc/gdb-shortcut
+      :desc "gdb" "o G" #'+scc/gdb-shortcut-no-args)
+
 
 ;; Ghostel (terminal)
 (map! :after ghostel
