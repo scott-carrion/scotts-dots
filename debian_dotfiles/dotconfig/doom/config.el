@@ -173,7 +173,7 @@
 (defun +scc/gdb-shortcut-no-args ()
   "Shortcut to launch gdb as if invoked with M-x gdb"
   (interactive)
-  (gdb (list (gud-query-cmdline 'gdb))))
+  (gdb (gud-query-cmdline 'gdb)))
 
 ;; Keybindings
 ;; Useful reference:
