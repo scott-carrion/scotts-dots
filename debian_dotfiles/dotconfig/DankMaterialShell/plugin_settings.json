@@ -1,0 +1,41 @@
+{
+  "bongoCat": {
+    "enabled": true,
+    "catCustomColor": {
+      "r": 0.8156862854957581,
+      "g": 0.7372549176216125,
+      "b": 1,
+      "a": 1,
+      "hsvHue": 0.7164166569709778,
+      "hsvSaturation": 0.26274511218070984,
+      "hsvValue": 1,
+      "hslHue": 0.7164166569709778,
+      "hslSaturation": 1,
+      "hslLightness": 0.8686350584030151,
+      "valid": true
+    },
+    "catColorMode": "primary",
+    "enableBlinking": true,
+    "soundEnabled": false,
+    "showMetrics": true,
+    "selectedDevicePath": "all"
+  },
+  "emojiLauncher": {
+    "enabled": true
+  },
+  "wallpaperCarousel": {
+    "enabled": true,
+    "overlayOpacity": 80
+  },
+  "screenshotPlus": {
+    "enabled": true
+  },
+  "dankActions": {
+    "enabled": true
+  },
+  "dankHooks": {
+    "enabled": true,
+    "wallpaperPath": "/home/skeet/.config/hypr/dms_onwallpaperchange_hook.sh",
+    "lightMode": "/home/skeet/.config/hypr/dms_onlightmodechanged_hook.sh\n"
+  }
+}
