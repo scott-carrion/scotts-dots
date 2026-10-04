@@ -32,6 +32,28 @@
     "enabled": true
   },
   "dankActions": {
-    "enabled": true
+    "enabled": true,
+    "variants": [
+      {
+        "icon": "backup",
+        "displayText": "",
+        "displayCommand": "/home/skeet/.config/polybar/hack/scripts/next-backup.sh",
+        "clickCommand": "",
+        "middleClickCommand": "(notify-send -a \"Backup helper\" \"Initiating backup\"; systemctl start restic-nas-backup) || (notify-send -a \"Backup helper\" \"Backup failed!\")",
+        "rightClickCommand": "",
+        "updateInterval": 10,
+        "showIcon": false,
+        "showText": true,
+        "visibilityCommand": "",
+        "visibilityInterval": 0,
+        "id": "variant_1791080072524",
+        "name": "Next Backup"
+      }
+    ]
+  },
+  "dankHooks": {
+    "enabled": true,
+    "wallpaperPath": "/home/skeet/.config/hypr/dms_onwallpaperchange_hook.sh",
+    "lightMode": "/home/skeet/.config/hypr/dms_onlightmodechanged_hook.sh\n"
   }
 }
