@@ -16,6 +16,8 @@
 -- hypridle
 -- hyprpolkitagent
 -- quickshell
+-- Dank Material Shell
+-- DMS plugin: Wallpaper carousel
 
 
 ------------------
@@ -359,6 +361,9 @@ hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = tr
 hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
 
+-- Wallpaper carousel
+hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("dms ipc wallpaperCarousel toggle"))
+
 
 --------------------------------
 ---- WINDOWS AND WORKSPACES ----
@@ -418,3 +423,4 @@ require("dms.binds-user")
 hl.on("hyprland.start", function()
   hl.exec_cmd("dms run")
 end)
+require("dms.layout")
