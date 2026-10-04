@@ -11,6 +11,7 @@
     }
   },
   "cornerRadius": 12,
+  "hyprlandLayoutGapsOverride": -2,
   "showSeconds": true,
   "useFahrenheit": true,
   "customAnimationDuration": 200,
@@ -20,6 +21,7 @@
   "appIdSubstitutions": [],
   "clockDateFormat": "ddd d MMM yyyy",
   "useAutoLocation": true,
+  "iconThemeDark": "Adwaita",
   "cursorSettings": {
     "theme": "System Default",
     "size": 24,

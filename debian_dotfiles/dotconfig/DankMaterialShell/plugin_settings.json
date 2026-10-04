@@ -18,7 +18,8 @@
     "enableBlinking": true,
     "soundEnabled": false,
     "showMetrics": true,
-    "selectedDevicePath": "all"
+    "selectedDevicePath": "all",
+    "catSizePercent": 100
   },
   "emojiLauncher": {
     "enabled": true
@@ -32,10 +33,5 @@
   },
   "dankActions": {
     "enabled": true
-  },
-  "dankHooks": {
-    "enabled": true,
-    "wallpaperPath": "/home/skeet/.config/hypr/dms_onwallpaperchange_hook.sh",
-    "lightMode": "/home/skeet/.config/hypr/dms_onlightmodechanged_hook.sh\n"
   }
 }
