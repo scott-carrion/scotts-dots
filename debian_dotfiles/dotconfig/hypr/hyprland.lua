@@ -68,6 +68,13 @@ local menu        = "hyprlauncher"
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 
+-- For NVIDIA tinkering
+-- See https://wiki.hypr.land/Nvidia/
+hl.env("LIBVA_DRIVER_NAME", "nvidia")
+hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+hl.env("NVD_BACKEND", "direct")
+
+hl.env("WLR_NO_HARDWARE_CURSORS", "1")
 
 -----------------------
 ----- PERMISSIONS -----
@@ -150,8 +157,10 @@ hl.config({
         workspace_back_and_forth = true,
     },
 
+    -- No hardware cursors is needed for apps that capture the cursor to work
     cursor = {
         inactive_timeout = 5,
+        no_hardware_cursors = 0,
     },
 
     dwindle = {
@@ -235,6 +244,11 @@ hl.config({
         force_default_wallpaper = -1,    -- Set to 0 or 1 to disable the anime mascot wallpapers
         disable_hyprland_logo   = false, -- If true disables the random hyprland logo / anime girl background. :(
     },
+    -- Disable variable frame rate, which can cause some annoying tearing for terminal applications
+    -- This only seems to happen on NVIDIA graphics cards, because of course it does
+    debug = {
+        vfr = false,
+    },
 })
 
 
@@ -288,8 +302,9 @@ hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("command -v hyprshutdown >/de
 --hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + SHIFT + SPACE", hl.dsp.window.float({ action = "toggle" }))
 --hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(menu))
---flameshot is not happy with Hyprland, but setting current desktop var to sway works
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("XDG_CURRENT_DESKTOP=sway flameshot gui"))
+-- flameshot is not happy with Hyprland, but setting current desktop var to sway works
+-- Using an X11 wrapper fixes odd behavior when there are multiple monitors
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("XDG_CURRENT_DESKTOP=sway QT_QPA_PLATFORM=xcb flameshot gui"))
 
 -- Misc window operations binds
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
@@ -422,5 +437,8 @@ require("dms.binds-user")
 -- DMS autostart
 hl.on("hyprland.start", function()
   hl.exec_cmd("dms run")
+  hl.exec_cmd("openrgb --startminimized")
+  hl.exec_cmd("XDG_CURRENT_DESKTOP=GNOME keyboard-center")
 end)
 require("dms.layout")
+require("dms.outputs")
