@@ -252,6 +252,22 @@
       :map ghostel-mode-map
       :desc "Switch to last workspace" "C-c TAB" #'+workspace/other)
 
+;; Ediff: (SPC D)
+(map! :leader
+      (:prefix-map ("D" . "diff")
+       :desc "show ediff sessions" "s" #'eregistry
+          (:prefix ("b" . "of active buffers")
+              :desc "3 buffers" "3" #'ediff-buffers3
+              :desc "2 buffers" "b" #'ediff-buffers
+              :desc "buffer and patch" "p" #'ediff-patch-buffer)
+          (:prefix ("d" . "of directories")
+              :desc "3 directories" "3" #'ediff-directories3
+              :desc "2 directories" "d" #'ediff-directories)
+          (:prefix ("f" . "of files")
+              :desc "3 files" "3" #'ediff-files3
+              :desc "2 files" "f" #'ediff-files
+              :desc "file and patch" "p" #'ediff-patch-file)))
+
 ;; PDF tool tweaks
 ;; This makes middle mouse click into a "hand tool"-esque pan
 (defun +scc/pdf-view-hand-tool (event)
