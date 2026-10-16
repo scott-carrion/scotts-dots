@@ -152,6 +152,7 @@
 ;; Modeline configuration
 (setq doom-modeline-display-default-persp-name t)
 (setq doom-modeline-persp-name t)
+(setq doom-modeline-unicode-number nil)
 
 ;; Add hook to enable themed view in PDF minor mode
 (add-hook 'pdf-view-mode-hook #'pdf-view-themed-minor-mode)
