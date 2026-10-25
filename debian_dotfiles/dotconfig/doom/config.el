@@ -21,6 +21,7 @@
 ;;       terminal. The only way out of this mode is M-RET, which is perfect.
 ;;       There is a persp-mode binding active here, so it's easy to leave char mode once done with the terminal and
 ;;       then swap perspectives. The default C-c bindings also claim to help with copying scrollback
+;;       To install: M-x ghostel-download-module or M-x ghostel-module-compile
 
 ;; Place your private configuration here! Remember, you do not need to run 'doom
 ;; sync' after modifying this file!
