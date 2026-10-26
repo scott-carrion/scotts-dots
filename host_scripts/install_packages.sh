@@ -12,3 +12,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y \
     podman \
     distrobox \
     crun
+
+echo "[$0] Pre-creating sdbox home directory"
+mkdir -p /home/sdbox
+chown -R $(id -u):$(id -g) /home/sdbox
