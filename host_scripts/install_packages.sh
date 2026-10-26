@@ -11,7 +11,8 @@ DEBIAN_FRONTEND=noninteractive apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
     podman \
     distrobox \
-    crun
+    crun \
+    flatpak
 
 echo "[$0] Pre-creating sdbox home directory"
 mkdir -p /home/sdbox

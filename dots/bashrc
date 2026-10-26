@@ -183,7 +183,7 @@ set -b
 
 # Export LD_LIBRARY_PATH to include locally installed libraries
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-export PATH=$PATH:/usr/sbin:/home/$USER/.platformio/penv/bin:/home/$USER/bin:/home/$USER/.nix-profile/bin:/home/$USER/.local/bin:/nix/var/nix/profiles/default/bin:/home/$USER/.config/emacs/bin
+export PATH=$PATH:/usr/sbin:$HOME/.platformio/penv/bin:$HOME/bin:$HOME/.nix-profile/bin:$HOME/.local/bin:/nix/var/nix/profiles/default/bin:$HOME/.config/emacs/bin
 
 # Export other bash vars
 export DOCKER_HOST=unix:///run/user/1000/docker.sock
