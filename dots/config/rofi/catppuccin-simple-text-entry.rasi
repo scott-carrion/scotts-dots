@@ -1,0 +1,55 @@
+// @import "catppuccin-latte"
+// @import "catppuccin-frappe"
+@import "catppuccin-macchiato"
+// @import "catppuccin-mocha"
+
+* {
+  background-color:            transparent;
+  border-color:                @foreground;
+  spacing:                     2;
+  background:                  @base;
+  foreground:                  @text;
+  normal-foreground:           @foreground;
+
+}
+window {
+    padding:          5;
+    background-color: @background;
+    border:           1;
+}
+mainbox {
+    padding: 0;
+    border:  0;
+}
+message {
+    enabled:    false;
+}
+textbox {
+    text-color: @foreground;
+}
+listview {
+    enabled:    false;
+}
+inputbar {
+    padding:    1px ;
+    spacing:    0px ;
+    text-color: @normal-foreground;
+    children:   [ "prompt","textbox-prompt-colon","entry" ];
+}
+entry {
+    text-color:        @normal-foreground;
+    cursor:            text;
+    spacing:           0;
+    placeholder-color: Gray;
+    placeholder:       "Type something...";
+}
+prompt {
+    spacing:    0;
+    text-color: @normal-foreground;
+}
+textbox-prompt-colon {
+    margin:     0px 0.3000em 0.0000em 0.0000em ;
+    expand:     false;
+    str:        ":";
+    text-color: inherit;
+}
