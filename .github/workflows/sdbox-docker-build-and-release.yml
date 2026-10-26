@@ -1,0 +1,76 @@
+name: Build and Tag sdbox Container
+
+on:
+  push:
+    branches:
+      - master
+
+# Queue runs sequentially so parallel builds don't calculate the same vX version
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io/scott-carrion
+  IMAGE_NAME: sdbox
+
+jobs:
+  build-push-and-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Calculate Next Repo Tag
+        id: version
+        run: |
+          git fetch --tags --force
+
+          # Check if HEAD already has a tag (for idempotent job re-runs)
+          EXISTING_NUM=$(git tag --points-at HEAD | awk '/^v[0-9]+$/ {print substr($0, 2)}' | sort -n | tail -n 1)
+
+          if [ -n "$EXISTING_NUM" ]; then
+            echo "tag=v${EXISTING_NUM}" >> "$GITHUB_OUTPUT"
+            echo "already_tagged=true" >> "$GITHUB_OUTPUT"
+          else
+            LATEST_NUM=$(git tag -l 'v*' | awk '/^v[0-9]+$/ {print substr($0, 2)}' | sort -n | tail -n 1)
+            NEXT_NUM=$(( ${LATEST_NUM:-0} + 1 ))
+            echo "tag=v${NEXT_NUM}" >> "$GITHUB_OUTPUT"
+            echo "already_tagged=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log In to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Container Metadata from Registry
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ steps.version.outputs.tag }}
+
+      - name: Build and Push Container
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Push Repo Tag
+        if: steps.version.outputs.already_tagged == 'false'
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
