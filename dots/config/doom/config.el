@@ -55,7 +55,7 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-;(setq doom-theme 'doom-one)
+;;(setq doom-theme 'doom-one)
 (setq doom-theme 'catppuccin)
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
@@ -121,11 +121,11 @@
 ;; Extend org mode todo keywords to include more states for local task tracking
 (after! org (setq-default org-todo-keywords
                           '((sequence "TODO(t)"
-                                      "NEXT(n)"
-                                      "IN_PROGRESS(p!)"
-                                      "IN_REVIEW(r!)"
-                                      "|"
-                                      "DONE(d!)")
+                             "NEXT(n)"
+                             "IN_PROGRESS(p!)"
+                             "IN_REVIEW(r!)"
+                             "|"
+                             "DONE(d!)")
                             (sequence "BLOCKED(b@)")
                             (sequence "|"
                                       "CANCELLED(c@)")
@@ -205,8 +205,7 @@
        :desc "Char x2" "K" #'avy-goto-char-2
        :desc "Last change" "c" #'goto-last-change
        :desc "Next change" "C" #'goto-last-change-reverse
-       :desc "File (deer)" "d" #'deer
-       :desc "File (ranger)" "r" #'ranger))
+       :desc "File (dirvish)" "d" #'dirvish))
 
 ;; Workspaces: SPC l
 ;; This just remaps the workspaces from SPC TAB to SPC l
@@ -258,17 +257,17 @@
 (map! :leader
       (:prefix-map ("D" . "diff")
        :desc "show ediff sessions" "s" #'eregistry
-          (:prefix ("b" . "of active buffers")
-              :desc "3 buffers" "3" #'ediff-buffers3
-              :desc "2 buffers" "b" #'ediff-buffers
-              :desc "buffer and patch" "p" #'ediff-patch-buffer)
-          (:prefix ("d" . "of directories")
-              :desc "3 directories" "3" #'ediff-directories3
-              :desc "2 directories" "d" #'ediff-directories)
-          (:prefix ("f" . "of files")
-              :desc "3 files" "3" #'ediff-files3
-              :desc "2 files" "f" #'ediff-files
-              :desc "file and patch" "p" #'ediff-patch-file)))
+       (:prefix ("b" . "of active buffers")
+        :desc "3 buffers" "3" #'ediff-buffers3
+        :desc "2 buffers" "b" #'ediff-buffers
+        :desc "buffer and patch" "p" #'ediff-patch-buffer)
+       (:prefix ("d" . "of directories")
+        :desc "3 directories" "3" #'ediff-directories3
+        :desc "2 directories" "d" #'ediff-directories)
+       (:prefix ("f" . "of files")
+        :desc "3 files" "3" #'ediff-files3
+        :desc "2 files" "f" #'ediff-files
+        :desc "file and patch" "p" #'ediff-patch-file)))
 
 ;; PDF tool tweaks
 ;; This makes middle mouse click into a "hand tool"-esque pan

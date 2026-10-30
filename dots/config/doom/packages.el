@@ -15,7 +15,6 @@
 (package! sidecar-locals)
 (package! avy)
 (package! goto-chg)
-(package! ranger)
 (package! magit-delta)
 (package! pcre2el)
 (package! dash)
