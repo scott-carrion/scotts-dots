@@ -182,8 +182,75 @@
 ;; https://discourse.doomemacs.org/t/how-to-re-bind-keys/56
 ;; https://rameezkhan.me/posts/2020/2020-07-03--adding-keybindings-to-doom-emacs/
 
-;; Misc
-(map! "C-h" 'backward-delete-char)
+;; Misc: GNU Readline-style editing, and some supporting helper functions to emulate its behavior
+
+(defun +scc/delete-backward-word (&optional arg)
+  "Delete characters backward until encountering the beginning of a word.
+Unlike `backward-kill-word', this does NOT push the deleted text to the `kill-ring'."
+  (interactive "p")
+  (delete-region (point) (progn (backward-word (or arg 1)) (point))))
+
+(defun +scc/readline-unix-line-discard ()
+  "Readline `unix-line-discard' (C-u): kill backward from point to beginning of line."
+  (interactive)
+  (kill-line 0))
+
+(defun +scc/readline-unix-word-rubout (&optional arg)
+  "Readline `unix-word-rubout' (C-w): kill backward using whitespace as the delimiter."
+  (interactive "p")
+  (let ((start (point)))
+    (dotimes (_ (or arg 1))
+      (skip-chars-backward " \t\n")
+      (skip-chars-backward "^ \t\n"))
+    (kill-region start (point))))
+
+(map! :i "C-h"   #'evil-delete-backward-char-and-join ; Delete char backward
+      :i "C-d"   #'delete-char                        ; Delete char forward (overrides evil-shift-left-line)
+      :i "C-w"   #'backward-kill-word                 ; Kill word backward (or use #'scc/readline-unix-word-rubout)
+      :i "C-M-h" #'+scc/delete-backward-word          ; Delete word backward (without polluting kill-ring)
+      :i "M-d"   #'kill-word                          ; Kill word forward
+
+      ;; Line killing & yanking
+      :i "C-k"   #'kill-line                          ; Kill to EOL (overrides evil-insert-digraph)
+      :i "C-u"   #'+scc/readline-unix-line-discard    ; Kill to BOL (or #'doom/backward-kill-to-bol-and-indent)
+      :i "C-y"   #'yank                               ; Yank from kill-ring (overrides evil-copy-from-above)
+      :i "M-y"   #'yank-pop                           ; Cycle through kill-ring after C-y
+
+      ;; Cursor movement
+      :i "C-a"   #'doom/backward-to-bol-or-indent     ; Smart BOL (or #'move-beginning-of-line for strict Readline)
+      :i "C-e"   #'move-end-of-line                   ; End of line
+      :i "C-f"   #'forward-char                       ; Forward char
+      :i "C-b"   #'backward-char                      ; Backward char
+      :i "M-f"   #'forward-word                       ; Forward word
+      :i "M-b"   #'backward-word                      ; Backward word
+
+      ;; Transposition, casing & undo
+      :i "C-t"   #'transpose-chars                    ; Transpose chars (overrides evil-shift-right-line)
+      :i "M-t"   #'transpose-words                    ; Transpose words
+      :i "M-u"   #'upcase-word                        ; Uppercase word forward
+      :i "M-l"   #'downcase-word                      ; Lowercase word forward
+      :i "M-c"   #'capitalize-word                    ; Capitalize word forward
+      :i "C-_"   #'undo-fu-only-undo                  ; Readline undo
+      :i "C-/"   #'undo-fu-only-undo)
+
+;; Apply equivalent Readline bindings for non-evil insertion mode keymaps (e.g. minibuffers)
+(map! "C-h"   #'delete-backward-char
+      "C-d"   #'delete-char
+      "C-w"   #'backward-kill-word
+      "C-M-h" #'+scc/delete-backward-word
+      "M-d"   #'kill-word
+      "C-k"   #'kill-line
+      "C-u"   #'+scc/readline-unix-line-discard
+      "C-y"   #'yank
+      "C-a"   #'move-beginning-of-line
+      "C-e"   #'move-end-of-line
+      "C-f"   #'forward-char
+      "C-b"   #'backward-char
+      "M-f"   #'forward-word
+      "M-b"   #'backward-word
+      "M-u"   #'upcase-word
+      "M-l"   #'downcase-word
+      "C-t"   #'transpose-chars)
 
 ;; Window management: SPC w
 ;; Replaces SPC w x (evil-window-exchange) with kill-buffer-and-window
