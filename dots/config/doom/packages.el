@@ -25,6 +25,8 @@
 (package! ewal)
 (package! ewal-doom-themes)
 (package! kconfig-mode)
+(package! another-package
+  :recipe (:host github :repo "alexmurray/flatbuffers-mode"))
 
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:

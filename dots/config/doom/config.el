@@ -144,6 +144,9 @@
                             ("LATER" . org-document-title)
                             ("MAYBE" . org-dispatcher-highlight))))
 
+;; For flatbuffers-mode, default to 4 space indents
+(setq-default flatbuffers-indent-offset 4)
+
 ;; Set catppuccin theme flavor. Options: frappe, latte, macchiato, or mocha
 (setq catppuccin-flavor 'macchiato)
 
