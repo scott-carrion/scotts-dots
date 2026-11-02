@@ -22,6 +22,13 @@
 ;;       There is a persp-mode binding active here, so it's easy to leave char mode once done with the terminal and
 ;;       then swap perspectives. The default C-c bindings also claim to help with copying scrollback
 ;;       To install: M-x ghostel-download-module or M-x ghostel-module-compile
+;;
+;; NOTE: DOOM's persp-mode deliberately disabled uniquify (clarifies buffer names for identically named files) by
+;;       default. There is apparently a bug causing uniquified buffers to not be placed in the correct workspace.
+;;       This is a long-standing bug that should not be expected to be resolved soon
+;;       See:
+;;       https://www.reddit.com/r/DoomEmacs/comments/shp6ez/why_uniquify_does_not_work_with_vertico/
+;;       https://github.com/Bad-ptr/persp-mode.el/issues/104
 
 ;; Place your private configuration here! Remember, you do not need to run 'doom
 ;; sync' after modifying this file!
@@ -144,8 +151,9 @@
                             ("LATER" . org-document-title)
                             ("MAYBE" . org-dispatcher-highlight))))
 
-;; For flatbuffers-mode, default to 4 space indents
+;; For flatbuffers-mode and sh-mode, default to 4 space indents
 (setq-default flatbuffers-indent-offset 4)
+(setq-default sh-basic-offset 4)
 
 ;; Set catppuccin theme flavor. Options: frappe, latte, macchiato, or mocha
 (setq catppuccin-flavor 'macchiato)
@@ -310,7 +318,8 @@ Unlike `backward-kill-word', this does NOT push the deleted text to the `kill-ri
 ;; Projectile: SPC p
 (map! :leader
       :desc "Install project" "p I" #'projectile-install-project
-      :desc "Package project" "p P" #'projectile-package-project)
+      :desc "Package project" "p P" #'projectile-package-project
+      :desc "Run project task" "p t" #'projectile-run-task)
 
 ;; GDB
 (map! :leader
