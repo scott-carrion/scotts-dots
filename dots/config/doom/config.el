@@ -350,29 +350,42 @@ Unlike `backward-kill-word', this does NOT push the deleted text to the `kill-ri
 
 ;; PDF tool tweaks
 ;; This makes middle mouse click into a "hand tool"-esque pan
-(defun +scc/pdf-view-hand-tool (event)
+(defun +scc/pdf-view-hand-tool (_event)
   "Pan the PDF by clicking and dragging, like a hand tool."
   (interactive "e")
-  (let* ((start-pos (mouse-pixel-position))
-         (start-x (cadr start-pos))
-         (start-y (cddr start-pos))
-         (start-vscroll (window-vscroll nil t))
-         (start-hscroll (window-hscroll)))
-    (track-mouse
-      (let ((done nil))
+  (let* ((win (selected-window))
+         (start-pos (cdr (mouse-pixel-position)))
+         (start-x (car start-pos))
+         (start-y (cdr start-pos)))
+    (when (and start-x start-y)
+      (let* ((char-width (frame-char-width (window-frame win)))
+             (start-vscroll (window-vscroll win t))
+             (start-hscroll (window-hscroll win))
+             (cur-vscroll start-vscroll)
+             (cur-hscroll start-hscroll)
+             (gc-cons-threshold most-positive-fixnum)
+             (track-mouse 'dragging)
+             (done nil))
         (while (not done)
           (let ((e (read-event)))
+            ;; 1. Coalesce queued movement events to prevent input backpressure
+            (while (and (input-pending-p) (mouse-movement-p e))
+              (setq e (read-event)))
             (cond
              ((mouse-movement-p e)
-              (let* ((new-pos (mouse-pixel-position))
-                     (new-x (cadr new-pos))
-                     (new-y (cddr new-pos)))
-                (when (and new-x new-y start-x start-y)
-                  (let ((dy (- start-y new-y))
-                        (dx (/ (- start-x new-x) (frame-char-width))))
-                    ;; Dynamically scroll the window based on pixel displacement
-                    (set-window-vscroll nil (max 0 (+ start-vscroll dy)) t)
-                    (set-window-hscroll nil (max 0 (+ start-hscroll dx)))))))
+              (let* ((pos (cdr (mouse-pixel-position)))
+                     (new-x (car pos))
+                     (new-y (cdr pos)))
+                (when (and new-x new-y)
+                  (let ((target-vscroll (max 0 (+ start-vscroll (- start-y new-y))))
+                        (target-hscroll (max 0 (+ start-hscroll (/ (- start-x new-x) char-width)))))
+                    ;; 2. Only mutate window scroll state when values actually change
+                    (unless (= target-vscroll cur-vscroll)
+                      (setq cur-vscroll target-vscroll)
+                      (set-window-vscroll win cur-vscroll t))
+                    (unless (= target-hscroll cur-hscroll)
+                      (setq cur-hscroll target-hscroll)
+                      (set-window-hscroll win cur-hscroll))))))
 
              ;; End the drag when the mouse button is released
              ((memq (car-safe e) '(drag-mouse-1 drag-mouse-2 drag-mouse-3
