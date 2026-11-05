@@ -80,6 +80,7 @@ DEBIAN_FRONTEND=noninteractive apt-get -y install \
     python3 \
     python3-pip \
     python3-cogapp \
+    python3-ruff \
     libcunit1-dev \
     libncurses-dev \
     pkg-config \
