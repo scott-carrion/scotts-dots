@@ -15,7 +15,7 @@ ENV DOOM_EMACS_VERSION="${DOOM_EMACS_VERSION}"
 ARG PYWAL_VERSION="3.8.15"
 ENV PYWAL_VERSION="${PYWAL_VERSION}"
 ARG RUFF_VERSION="0.17.3"
-ENV PYWAL_VERSION="${RUFF_VERSION}"
+ENV RUFF_VERSION="${RUFF_VERSION}"
 
 # tmux default session and socket names
 # Make these different from "main" and "default" to avoid confusion with host tmux sessions
