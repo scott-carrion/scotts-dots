@@ -80,7 +80,6 @@ DEBIAN_FRONTEND=noninteractive apt-get -y install \
     python3 \
     python3-pip \
     python3-cogapp \
-    python3-ruff \
     libcunit1-dev \
     libncurses-dev \
     pkg-config \
@@ -124,6 +123,7 @@ DEBIAN_FRONTEND=noninteractive apt-get -y install \
 
 echo "[$0] Installing extra programs"
 pipx install --global pywal16==${PYWAL_VERSION}
+pipx install --global ruff==${RUFF_VERSION}
 
 # TODO: INSTALL HYPRLAND AND DMS
 

@@ -383,4 +383,8 @@ Unlike `backward-kill-word', this does NOT push the deleted text to the `kill-ri
 ;; Bind the new hand tool to pdf-view-mode
 (map! :after pdf-tools
       :map pdf-view-mode-map
-      "<down-mouse-2>" #'+scc/pdf-view-hand-tool)
+      "<down-mouse-2>" #'+scc/pdf-view-hand-tool
+      "<C-wheel-up>" #'pdf-view-enlarge
+      "<C-wheel-down>" #'pdf-view-shrink
+      "<C-mouse-4>" #'pdf-view-enlarge
+      "<C-mouse-5>" #'pdf-view-shrink)
