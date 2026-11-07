@@ -131,6 +131,71 @@ wal_regenerate() {
     fi
 }
 
+# Helper that executes the given command repeatedly
+repeat() {
+    local usage="repeat [-n|--number NUM_REPETITIONS] [-i|--interval SLEEP_INTR_SEC] [-q|--quiet] [-h|--help] COMMAND"
+
+    local opts
+    if ! opts=$(getopt -o n:i:qh --long number:,interval:,quiet,help -n "$0" -- "$@"); then
+        echo "$usage" 2>&1
+        return 1
+    fi
+
+    eval set -- "$opts"
+    local reps=-1
+    local sleep_intr=1
+    local quiet=0
+
+    while true; do
+        case "$1" in
+            -n | --number)
+                reps=$2
+                shift 2
+                ;;
+            -i | --interval)
+                if [[ $1 -lt 0 ]]; then
+                    echo "SLEEP_INTR_SEC cannot be negative" 2>&1
+                    return 2
+                fi
+                sleep_intr=$2
+                shift 2
+                ;;
+            -q | --quiet)
+                quiet=1
+                shift
+                ;;
+            -h | --help)
+                echo "$usage"
+                return 0
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *)
+                echo "repeat: Internal argument parsing error" 2>&1
+                return 1
+                ;;
+        esac
+    done
+
+    local i=0
+    while [[ $i -ne $reps ]]; do
+        if [[ $quiet -eq 0 ]]; then
+            echo "==== iter $i ===="
+        fi
+
+        $@
+
+        if [[ $quiet -eq 0 ]]; then
+            echo "========"
+        fi
+
+        i=$((i+1))
+        sleep $sleep_intr
+    done
+}
+
 # Alias definitions.
 # You may want to put all your additions into a separate file like
 # ~/.bash_aliases, instead of adding them here directly.
