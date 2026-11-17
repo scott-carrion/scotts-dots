@@ -188,6 +188,38 @@
   (interactive)
   (gdb (gud-query-cmdline 'gdb)))
 
+;; ibuffer hack that resizes name column so that buffer name can actually be read
+;; Source: https://www.reddit.com/r/emacs/comments/1twt3pw/automatically_resize_the_ibuffer_name_column_to/
+(defvar +scc/max-name-field-column 50)
+(defun +scc/update-ibuffer-name-length ()
+  (let ((max-length-buffer-name (apply #'max (mapcar (lambda (x)
+                                                       (length (buffer-name x)))
+                                                     (buffer-list)))))
+    (setq ibuffer-formats `((mark
+                             modified
+                             read-only
+                             locked
+                             " "
+                             (name ,(min +scc/max-name-field-column
+                                         max-length-buffer-name)
+                                   ,(min +scc/max-name-field-column
+                                         max-length-buffer-name)
+                                   :left
+                                   :elide)
+                             " "
+                             " "
+                             (mode 16 16 :left :elide)
+                             " "
+                             filename-and-process)
+                            (mark " " (name 16 -1) " " filename)))))
+
+(advice-add #'ibuffer-update
+            :before
+            (lambda (arg &optional SILENT)
+              (+scc/update-ibuffer-name-length)))
+
+(add-to-list 'ibuffer-hook #'+scc/update-ibuffer-name-length)
+
 ;; Keybindings
 ;; Useful reference:
 ;; https://discourse.doomemacs.org/t/how-to-re-bind-keys/56
@@ -265,10 +297,37 @@ Unlike `backward-kill-word', this does NOT push the deleted text to the `kill-ri
 
 ;; Window management: SPC w
 ;; Replaces SPC w x (evil-window-exchange) with kill-buffer-and-window
+;; Ports familiar window split functions from spacemacs
 (map! :leader
       :desc "Kill buffer and window" "w x" #'kill-buffer-and-window
       :desc "evil-window-split" "w -" #'evil-window-split
       :desc "evil-window-split-vertical" "w /" #'evil-window-vsplit)
+
+;; Moves SPC w <number> bindings to SPC <number> bindings
+(after! winum
+  (map! :map evil-window-map
+        "0" nil
+        "1" nil
+        "2" nil
+        "3" nil
+        "4" nil
+        "5" nil
+        "6" nil
+        "7" nil
+        "8" nil
+        "9" nil))
+
+(map! :leader
+      :desc "Select window 0" "0" #'winum-select-window-0-or-10
+      :desc "Select window 1" "1" #'winum-select-window-1
+      :desc "Select window 2" "2" #'winum-select-window-2
+      :desc "Select window 3" "3" #'winum-select-window-3
+      :desc "Select window 4" "4" #'winum-select-window-4
+      :desc "Select window 5" "5" #'winum-select-window-5
+      :desc "Select window 6" "6" #'winum-select-window-6
+      :desc "Select window 7" "7" #'winum-select-window-7
+      :desc "Select window 8" "8" #'winum-select-window-8
+      :desc "Select window 9" "9" #'winum-select-window-9)
 
 ;; Navigation: SPC j
 ;; Avy does have variants of these restricting candidates to above/below cursor and in same line,
@@ -283,7 +342,8 @@ Unlike `backward-kill-word', this does NOT push the deleted text to the `kill-ri
        :desc "Char x2" "K" #'avy-goto-char-2
        :desc "Last change" "c" #'goto-last-change
        :desc "Next change" "C" #'goto-last-change-reverse
-       :desc "File (dirvish)" "d" #'dirvish))
+       :desc "File (dirvish)" "d" #'dirvish
+       :desc "Tab" "t" #'centaur-tabs-ace-jump))
 
 ;; Workspaces: SPC l
 ;; This just remaps the workspaces from SPC TAB to SPC l
@@ -347,6 +407,22 @@ Unlike `backward-kill-word', this does NOT push the deleted text to the `kill-ri
         :desc "3 files" "3" #'ediff-files3
         :desc "2 files" "f" #'ediff-files
         :desc "file and patch" "p" #'ediff-patch-file)))
+
+;; compilation-mode tweaks
+;; SPC m x or C-c x: Dump to scratch buffer
+;; This gives a good way to make compilation results more durable when needed
+(map! :after compile
+      :map compilation-mode-map
+      :localleader
+      :desc "Dump to scratch buffer" "x"
+      (cmd! (let ((buf (current-buffer)))
+              (with-current-buffer (doom-scratch-buffer)
+                (goto-char (point-max))
+                (unless (bobp)
+                  (unless (bolp) (insert "\n"))
+                  (insert (make-string 120 ?=) "\n"))
+                (insert-buffer-substring buf))
+              (message "Dumped compilation results to scratch buffer"))))
 
 ;; PDF tool tweaks
 ;; This makes middle mouse click into a "hand tool"-esque pan
